@@ -1,0 +1,39 @@
+node_modules/
+# Ignore high-noise/low-signal mobile directories
+android/
+ios/
+
+*.log
+# iOS
+ios/Pods/
+ios/build/
+
+# Android
+android/build/
+android/app/build/
+
+# Expo
+.expo/
+.expo-shared/
+
+# Coverage / dist
+coverage/
+dist/
+build/
+
+# Assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.mov
+*.webm
+
+# Generated files
+*.log
+*.lock
+
+# Graphify output itself
+graphify-out/

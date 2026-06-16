@@ -1,0 +1,8 @@
+{
+  "err": null,
+  "note": "Image URLs from Figma export cache (2026-05-29); nodes API rate-limited",
+  "images": {
+    "407:4965": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/1981e1d9-af35-4fc9-a3e4-7bc9c77f5a1e",
+    "416:5401": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/66265761-e1f7-4ab4-805e-75c3669154f3"
+  }
+}

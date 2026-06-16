@@ -1,0 +1,204 @@
+import {apiClient} from './client';
+import {fetchRestCountriesWithFallback} from './restCountriesApi';
+import {asArray, unwrapEnvelope} from './parseResponse';
+import type {
+  ApiEnvelope,
+  CoursesPage,
+  CoursesQueryParams,
+  CourseFiltersDto,
+  CourseListItem,
+  FilterOption,
+  UniversityDto,
+  EventDto,
+} from './types';
+
+// ─── Health ───────────────────────────────────────────────────────────────────
+
+export async function getHealth() {
+  const {data} = await apiClient.get<{status: string; uptime?: number}>('/health');
+  return data;
+}
+
+// ─── Courses ──────────────────────────────────────────────────────────────────
+
+/**
+ * GET /courses — supports API_Docs nested page object and legacy flat pagination.
+ *
+ * Documented: `{ status, data: { courses, total, page, limit } }`
+ * Legacy live: `{ status, data: Course[], currentPage, itemsPerPage, totalItems, totalPages }`
+ */
+type CoursesListPayload =
+  | CourseListItem[]
+  | {
+      courses?: CourseListItem[];
+      data?: CourseListItem[];
+      total?: number;
+      page?: number;
+      limit?: number;
+      totalPages?: number;
+    };
+
+type CoursesListResponse = {
+  status?: string;
+  data?: CoursesListPayload;
+  currentPage?: number;
+  itemsPerPage?: number;
+  totalItems?: number;
+  totalPages?: number;
+};
+
+function normalizeCoursesListResponse(
+  res: CoursesListResponse,
+  fallbackLimit: number,
+): CoursesPage {
+  const payload = res.data;
+
+  if (Array.isArray(payload)) {
+    const limit = res.itemsPerPage ?? fallbackLimit;
+    const total = res.totalItems ?? payload.length;
+    const page = res.currentPage ?? 1;
+    const totalPages = res.totalPages ?? Math.max(1, Math.ceil(total / limit));
+    return {courses: payload, total, page, limit, totalPages};
+  }
+
+  if (payload && typeof payload === 'object') {
+    const courses = asArray(payload.courses ?? payload.data);
+    const limit = payload.limit ?? res.itemsPerPage ?? fallbackLimit;
+    const total = payload.total ?? res.totalItems ?? courses.length;
+    const page = payload.page ?? res.currentPage ?? 1;
+    const totalPages =
+      payload.totalPages ??
+      res.totalPages ??
+      Math.max(1, Math.ceil(total / Math.max(limit, 1)));
+    return {courses, total, page, limit, totalPages};
+  }
+
+  return {courses: [], total: 0, page: 1, limit: fallbackLimit, totalPages: 1};
+}
+
+export async function getCourses(params?: CoursesQueryParams): Promise<CoursesPage> {
+  const limit = params?.limit ?? 10;
+  const {data: res} = await apiClient.get<CoursesListResponse>('/courses', {params});
+  return normalizeCoursesListResponse(res, limit);
+}
+
+/** GET /courses/:id — envelope or raw course object at the root. */
+function parseCourseDetailResponse(
+  body: CourseListItem | ApiEnvelope<CourseListItem> | null | undefined,
+): CourseListItem | null {
+  const unwrapped = unwrapEnvelope(body);
+  if (unwrapped && typeof unwrapped === 'object' && 'id' in unwrapped) {
+    return unwrapped as CourseListItem;
+  }
+  return null;
+}
+
+export async function getCourseById(id: number): Promise<CourseListItem | null> {
+  try {
+    const {data} = await apiClient.get<CourseListItem | ApiEnvelope<CourseListItem>>(
+      `/courses/${id}`,
+    );
+    return parseCourseDetailResponse(data);
+  } catch {
+    return null;
+  }
+}
+
+export async function searchCourses(search: string) {
+  return getCourses({search, limit: 20});
+}
+
+/** Map string[] or FilterOption[] to FilterOption[]. */
+function toFilterOptions(items: (string | FilterOption)[] | undefined): FilterOption[] {
+  if (!items?.length) {
+    return [];
+  }
+  return items.map(item =>
+    typeof item === 'string' ? {label: item, value: item} : item,
+  );
+}
+
+/**
+ * GET /courses/filters — normalises API_Docs string arrays and legacy `{label,value}` arrays.
+ */
+function normalizeCourseFilters(raw: Record<string, unknown> | null | undefined): CourseFiltersDto {
+  if (!raw) {
+    return {
+      degree_levels: [],
+      countries: [],
+      categories: [],
+      durations: [],
+      intakes: [],
+      universities: [],
+      fees: [],
+      sort: [],
+    };
+  }
+
+  const degree =
+    raw.degree_levels ?? raw.degreelevels ?? raw.degreeLevels;
+  const countries = raw.countries ?? raw.destinations;
+
+  return {
+    degree_levels: toFilterOptions(degree as (string | FilterOption)[]),
+    countries: toFilterOptions(countries as (string | FilterOption)[]),
+    categories: toFilterOptions(raw.categories as (string | FilterOption)[]),
+    durations: toFilterOptions(raw.durations as (string | FilterOption)[]),
+    intakes: toFilterOptions(raw.intakes as (string | FilterOption)[]),
+    universities: toFilterOptions(raw.universities as (string | FilterOption)[]),
+    fees: toFilterOptions(raw.fees as (string | FilterOption)[]),
+    sort: toFilterOptions(raw.sort as (string | FilterOption)[]),
+  };
+}
+
+export async function getCourseFilters(): Promise<CourseFiltersDto> {
+  const {data} = await apiClient.get<ApiEnvelope<Record<string, unknown>>>('/courses/filters');
+  return normalizeCourseFilters(unwrapEnvelope(data) ?? undefined);
+}
+
+// ─── Universities ─────────────────────────────────────────────────────────────
+
+export async function getUniversities() {
+  const {data} = await apiClient.get<ApiEnvelope<UniversityDto[]>>('/universities');
+  return asArray(unwrapEnvelope(data));
+}
+
+export async function getUniversityById(id: number) {
+  const {data} = await apiClient.get<ApiEnvelope<UniversityDto>>(`/universities/${id}`);
+  return unwrapEnvelope(data);
+}
+
+// ─── Countries ────────────────────────────────────────────────────────────────
+
+/** Onboarding country pickers — REST Countries v5 with bundled fallback. */
+export async function getCountries() {
+  return fetchRestCountriesWithFallback();
+}
+
+export async function getCountryById(id: number) {
+  const countries = await getCountries();
+  return countries.find(c => c.id === id) ?? null;
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+export async function getEvents(params?: {
+  eventType?: 'Online' | 'Offline';
+  city?: string;
+  country?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const {data} = await apiClient.get<ApiEnvelope<EventDto[]>>('/events', {params});
+  return asArray(unwrapEnvelope(data));
+}
+
+export async function getUpcomingEvent() {
+  const {data} = await apiClient.get<ApiEnvelope<EventDto>>('/events/upcoming');
+  return unwrapEnvelope(data);
+}
+
+export async function getEventById(id: number) {
+  const {data} = await apiClient.get<ApiEnvelope<EventDto>>(`/events/${id}`);
+  return unwrapEnvelope(data);
+}

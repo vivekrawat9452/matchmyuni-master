@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "source": "Figma — MatchMyUni Mobile App",
+    "fileId": "pHnQspQkvUJvE9TyiQN5Zv",
+    "screens": [
+      "593:1755 — Application tab / Shortlist",
+      "593:2244 — Application tab / Applied",
+      "593:846 — Track Application status"
+    ],
+    "note": "Colors match assets/studentflow/tokens.json and src/utils/colors.ts"
+  },
+  "segmentControl": {
+    "height": 48,
+    "pillHeight": 40,
+    "trackBg": "#EFEAE2",
+    "activePillBg": "#FFFFFF",
+    "labelSize": 14,
+    "labelWeightActive": 700,
+    "labelColor": "#677899",
+    "labelColorActive": "#1B2A4A",
+    "borderRadius": 1000,
+    "padding": 4
+  },
+  "courseCard": {
+    "borderRadius": 18,
+    "padding": 14,
+    "borderColor": "#E7E1D9",
+    "backgroundColor": "#FFFFFF",
+    "logoSize": 48,
+    "logoRadius": 12,
+    "courseNameSize": 14,
+    "uniNameSize": 11,
+    "ctaHeight": 44,
+    "ctaRadius": 1000,
+    "ctaBg": "#E8613A"
+  },
+  "trackHeader": {
+    "backgroundColor": "#E8613A",
+    "titleSize": 24,
+    "titleWeight": 800,
+    "backLabelSize": 15
+  },
+  "timeline": {
+    "dotSize": 22,
+    "dotDoneColor": "#3CC09F",
+    "dotActiveColor": "#E8613A",
+    "dotTodoBorder": "#E7E1D9",
+    "connectorWidth": 2
+  }
+}
