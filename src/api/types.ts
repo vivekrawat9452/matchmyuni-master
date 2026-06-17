@@ -16,9 +16,12 @@ export interface SessionDto {
   refresh_token: string;
 }
 
+export type UserRole = 'student' | 'agent' | 'partner' | 'counsellor' | 'admin';
+
 export interface UserDto {
   id: string;
   studentId?: string;
+  role?: UserRole;
   email: string;
   firstName: string;
   lastName: string;

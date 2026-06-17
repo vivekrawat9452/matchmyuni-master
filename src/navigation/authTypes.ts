@@ -10,6 +10,9 @@ export type AuthStackParamList = {
   EmailEntry: undefined;
   PasswordCreate: undefined;
   AccountDetails: undefined;
+  AgentPersonalDetails: undefined;
+  AgentCountrySelect: undefined;
+  AgentQueue: undefined;
   StudyInterests: undefined;
   LocationSelect: undefined;
   StartTimeline: undefined;

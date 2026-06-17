@@ -17,6 +17,9 @@ import {StartTimelineContainer} from '../flows/onboarding/StartTimeline/StartTim
 import {BudgetSelectContainer} from '../flows/onboarding/BudgetSelect/BudgetSelectContainer';
 import {PreparingContainer} from '../flows/onboarding/Preparing/PreparingContainer';
 import {AgentPreparingContainer} from '../flows/onboarding/Preparing/AgentPreparingContainer';
+import {AgentPersonalDetailsContainer} from '../flows/onboarding/AgentPersonalDetails/AgentPersonalDetailsContainer';
+import {AgentCountrySelectContainer} from '../flows/onboarding/AgentCountrySelect/AgentCountrySelectContainer';
+import {AgentQueueContainer} from '../flows/onboarding/AgentQueue/AgentQueueContainer';
 import {BrandSplashContainer} from '../flows/entry/BrandSplash/BrandSplashContainer';
 
 import {colors} from '../utils/colors';
@@ -44,12 +47,15 @@ export function AuthNavigator() {
       <Stack.Screen name="EmailEntry" component={EmailEntryContainer} />
       <Stack.Screen name="PasswordCreate" component={PasswordCreateContainer} />
       <Stack.Screen name="AccountDetails" component={AccountDetailsContainer} />
+      <Stack.Screen name="AgentPersonalDetails" component={AgentPersonalDetailsContainer} />
+      <Stack.Screen name="AgentCountrySelect" component={AgentCountrySelectContainer} />
       <Stack.Screen name="StudyInterests" component={StudyInterestsContainer} />
       <Stack.Screen name="LocationSelect" component={LocationSelectContainer} />
       <Stack.Screen name="StartTimeline" component={StartTimelineContainer} />
       <Stack.Screen name="BudgetSelect" component={BudgetSelectContainer} />
       <Stack.Screen name="Preparing" component={PreparingContainer} options={{...anim, gestureEnabled: false}} />
       <Stack.Screen name="AgentPreparing" component={AgentPreparingContainer} options={{...anim, gestureEnabled: false}} />
+      <Stack.Screen name="AgentQueue" component={AgentQueueContainer} options={{...anim, gestureEnabled: false}} />
       <Stack.Screen name="BrandSplash" component={BrandSplashContainer} options={{...anim, gestureEnabled: false}} />
     </Stack.Navigator>
   );

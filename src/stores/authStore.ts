@@ -3,8 +3,9 @@ import {createJSONStorage, persist} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {UserDto} from '../api/types';
 import {TOKEN_KEY, setStoredToken} from '../api/client';
+import {appRoleFromUser, type AppRole} from '../utils/appRole';
 
-type Role = 'student' | 'agent' | null;
+type Role = AppRole | null;
 
 export interface AuthState {
   accessToken: string | null;
@@ -31,12 +32,12 @@ export const useAuthStore = create<AuthState>()(
       role: null,
       setSession: async ({accessToken, refreshToken, user}) => {
         await setStoredToken(accessToken);
-        set({accessToken, refreshToken, user});
+        set({accessToken, refreshToken, user, role: appRoleFromUser(user)});
       },
       setUser: u => set({user: u}),
       signOut: async () => {
         await setStoredToken(null);
-        set({accessToken: null, refreshToken: null, user: null});
+        set({accessToken: null, refreshToken: null, user: null, role: null});
       },
       setRole: r => set({role: r}),
     }),
@@ -47,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: s.accessToken,
         refreshToken: s.refreshToken,
         user: s.user,
+        role: s.role,
       }),
       onRehydrateStorage: () => async state => {
         // Re-sync the dedicated TOKEN_KEY so the Axios interceptor can read it.

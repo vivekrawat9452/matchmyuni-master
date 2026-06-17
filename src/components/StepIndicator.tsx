@@ -19,8 +19,8 @@ import {colors} from '../utils/colors';
 /** Total steps in the student onboarding flow (email/pw → 4 questions) */
 export const ONBOARDING_TOTAL_STEPS = 5;
 
-/** Total steps in the agent onboarding flow (same component, different total) */
-export const AGENT_TOTAL_STEPS = 5;
+/** Total steps in the agent onboarding flow (email/pw → personal → country) */
+export const AGENT_TOTAL_STEPS = 3;
 
 interface Props {
   currentStep: number; // 1-based; steps < currentStep are "done"

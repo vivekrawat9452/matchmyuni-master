@@ -1360,7 +1360,7 @@ PODS:
     - Yoga
   - react-native-netinfo (12.0.1):
     - React-Core
-  - react-native-safe-area-context (5.8.0):
+  - react-native-safe-area-context (5.7.0):
     - React-Core
   - react-native-webview (13.16.1):
     - DoubleConversion
@@ -1710,7 +1710,7 @@ PODS:
     - React-utils (= 0.79.7)
   - RNCAsyncStorage (2.1.2):
     - React-Core
-  - RNGestureHandler (2.31.2):
+  - RNGestureHandler (2.31.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1883,7 +1883,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNSVG (15.15.5):
+  - RNSVG (15.15.4):
     - React-Core
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
@@ -2181,7 +2181,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: c1a3d5195c3985a2246f130ad3f3cad587b79b03
   react-native-document-picker: 4856ce3e8f9c2336b4d5f930eb9e66493f29a362
   react-native-netinfo: b54effb58887516971e6c273ee0ff0dd853021d3
-  react-native-safe-area-context: a9f88b96b54546384efbf54d92eba1ebe60444e9
+  react-native-safe-area-context: 37b720094bcaa36abcd593e08f2ad16507a94769
   react-native-webview: e1b7ac6d4aca5dab394f1edc7707d4e9d03e16fb
   React-NativeModulesApple: 1ed1401e841d89df68c9a429c785d51272fc21a5
   React-oscompat: 0047f0ce53a328ce225777a6c617970556602c7c
@@ -2215,10 +2215,10 @@ SPEC CHECKSUMS:
   ReactCodegen: e61df93a81081dc282796fa3c62b89725f4a009a
   ReactCommon: 6297fb8da56a0e1b493f8793563fde011b87591d
   RNCAsyncStorage: addfc2cb6511dbe199c56c6b26ede383b6c38919
-  RNGestureHandler: 4990c05df5a3b252c0f4fc77b66c21a18c17f8fd
+  RNGestureHandler: 10dd37a2457a4decf625b0821e6a0f6603070642
   RNReanimated: d5e68954fe8409a6555f33551c9297ef1648543e
   RNScreens: 58d67f262cd6ccee99a43ae1ab002601b92f0207
-  RNSVG: a696c6136b28dcb3328f05e77e32782c56639404
+  RNSVG: d455564bdc17a8609726013022152606e0a2e6d1
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 9663a18d096f7f7e17a535cf00849db756709955
 

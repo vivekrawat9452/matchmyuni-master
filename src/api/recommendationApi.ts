@@ -16,20 +16,34 @@ function isRecommendationNotFound(err: unknown): boolean {
   return axios.isAxiosError(err) && err.response?.status === 404;
 }
 
+const PREFERENCES_GET_LOG = '[GET /recommendations/preferences]';
+const PREFERENCES_PUT_LOG = '[PUT /recommendations/preferences]';
+
 /** GET /recommendations/preferences */
 export async function getRecommendationPreferences(): Promise<RecommendationPreferencesGetData | null> {
+  console.log(PREFERENCES_GET_LOG, 'request');
   try {
-    const {data} = await apiClient.get<ApiEnvelope<RecommendationPreferencesGetData>>(
+    const res = await apiClient.get<ApiEnvelope<RecommendationPreferencesGetData>>(
       '/recommendations/preferences',
     );
-    return unwrapEnvelope(data);
+    const unwrapped = unwrapEnvelope(res.data);
+    console.log(PREFERENCES_GET_LOG, 'response', {
+      data: res.data,
+      httpStatus: res.status,
+      envelopeStatus: res.data,
+      hasPreferences: unwrapped?.preferences != null,
+      preferredCategoriesCount: unwrapped?.preferences?.preferredCategories?.length ?? 0,
+      preferredCountriesCount: unwrapped?.preferences?.preferredCountries?.length ?? 0,
+      allowedCategoriesCount: unwrapped?.allowedCategories?.length ?? 0,
+      allowedCountriesCount: unwrapped?.allowedCountries?.length ?? 0,
+    });
+    return unwrapped;
   } catch (err) {
     if (isRecommendationNotFound(err)) {
-      console.warn(
-        '[GET /recommendations/preferences] not deployed (404) — preferences unavailable',
-      );
+      console.warn(PREFERENCES_GET_LOG, 'not deployed (404) — preferences unavailable');
       return null;
     }
+    console.error(PREFERENCES_GET_LOG, 'failed', err);
     throw err;
   }
 }
@@ -39,23 +53,38 @@ export async function saveRecommendationPreferences(
   payload: RecommendationPreferencesPayload,
   options?: {accessToken?: string},
 ): Promise<SaveRecommendationPreferencesData | null> {
+  console.log(PREFERENCES_PUT_LOG, 'request (onboarding signup)', {
+    highestQualificationLevel: payload.highestQualificationLevel,
+    intendedStart: payload.intendedStart,
+    budget: payload.budget,
+    preferredCategories: payload.preferredCategories,
+    preferredCountries: payload.preferredCountries,
+    hasExplicitAccessToken: Boolean(options?.accessToken),
+  });
   try {
     const headers = options?.accessToken
       ? {Authorization: `Bearer ${options.accessToken}`}
       : undefined;
-    const {data} = await apiClient.put<ApiEnvelope<SaveRecommendationPreferencesData>>(
+    const res = await apiClient.put<ApiEnvelope<SaveRecommendationPreferencesData>>(
       '/recommendations/preferences',
       payload,
       {headers},
     );
-    return unwrapEnvelope(data);
+    const unwrapped = unwrapEnvelope(res.data);
+    console.log(PREFERENCES_PUT_LOG, 'response (onboarding signup)', {
+      httpStatus: res.status,
+      envelopeStatus: res.data?.status,
+      profileHash: unwrapped?.profileHash,
+      cacheInvalidated: unwrapped?.cacheInvalidated,
+      preferencesSetAt: unwrapped?.preferences?.preferencesSetAt,
+    });
+    return unwrapped;
   } catch (err) {
     if (isRecommendationNotFound(err)) {
-      console.warn(
-        '[PUT /recommendations/preferences] not deployed (404) — preferences not saved',
-      );
+      console.warn(PREFERENCES_PUT_LOG, 'not deployed (404) — preferences not saved');
       return null;
     }
+    console.error(PREFERENCES_PUT_LOG, 'failed (onboarding signup)', err);
     throw err;
   }
 }

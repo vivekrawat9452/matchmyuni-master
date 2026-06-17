@@ -48,7 +48,7 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {getDiscoverRecommendationsWithPreferences} from '../../../api/recommendationApi';
+import {getDiscoverRecommendations} from '../../../api/recommendationApi';
 import {getCourseFilters, getCourses} from '../../../api/publicApi';
 import {colors} from '../../../utils/colors';
 import {FontSizes, Weights, Styles} from '../../../utils';
@@ -649,7 +649,7 @@ export function DiscoverContainer() {
     refetch: refetchDiscover,
   } = useQuery({
     queryKey: ['discover', 'recommendations'],
-    queryFn: () => getDiscoverRecommendationsWithPreferences({page: 1, pageSize: 20}),
+    queryFn: () => getDiscoverRecommendations({page: 1, pageSize: 20}),
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
@@ -705,7 +705,7 @@ export function DiscoverContainer() {
     }));
   }, [useFilteredBrowse, coursesPage?.courses, discoverData?.results]);
 
-  const hasRecommendationPreferences = discoverData?.hasPreferences !== false;
+  const hasRecommendationPreferences = discoverData?.hasPreferences === true;
 
   // Reset card index when filters change
   useEffect(() => {

@@ -22,6 +22,10 @@ export interface OnboardingDraft {
   preferredCategories: string[];
   /** Country ids from LocationSelect (study destinations) */
   countryIds: number[];
+  /** Agent organisation name (AgentPersonalDetails) */
+  organization: string;
+  /** Agent operating country ids (AgentCountrySelect) */
+  operatingCountryIds: number[];
   /** Display label from StartTimeline */
   timeline: string | null;
   /** API intendedStart for recommendations */
@@ -51,6 +55,8 @@ const initial: Omit<OnboardingDraft, 'setField' | 'reset'> = {
   studyTags: [],
   preferredCategories: [],
   countryIds: [],
+  organization: '',
+  operatingCountryIds: [],
   timeline: null,
   intendedStart: null,
   budgetTier: null,

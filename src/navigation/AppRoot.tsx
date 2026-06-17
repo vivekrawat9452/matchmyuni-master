@@ -1,10 +1,12 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {NavigationContainer, DefaultTheme} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {useAuthStore} from '../stores/authStore';
-import {useAuthHydrated} from '../hooks/useAuthHydrated';
 import {AuthNavigator} from './AuthNavigator';
 import {AppStackNavigator} from './AppStackNavigator';
+import {AgentAppStackNavigator} from './AgentAppStackNavigator';
+import {useAuthHydrated} from '../hooks/useAuthHydrated';
+import {useAuthStore} from '../stores/authStore';
+import {isPartnerAppUser} from '../utils/appRole';
 import {BrandSplashScreen} from '../flows/entry/BrandSplash/BrandSplashScreen';
 import {GlobalLoader} from '../components/GlobalLoader';
 import {ErrorBoundary} from '../components/ErrorBoundary';
@@ -20,6 +22,9 @@ const Stack = createNativeStackNavigator<RootP>();
 export function AppRoot() {
   const hydrated = useAuthHydrated();
   const accessToken = useAuthStore(s => s.accessToken);
+  const user = useAuthStore(s => s.user);
+  const role = useAuthStore(s => s.role);
+  const isAgentApp = isPartnerAppUser(user, role);
 
   // Tracks whether the 1.5 s minimum display window has elapsed.
   const [minDelayDone, setMinDelayDone] = useState(false);
@@ -56,7 +61,10 @@ export function AppRoot() {
       <ErrorBoundary>
         <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
           {accessToken ? (
-            <Stack.Screen name="App" component={AppStackNavigator} />
+            <Stack.Screen
+              name="App"
+              component={isAgentApp ? AgentAppStackNavigator : AppStackNavigator}
+            />
           ) : (
             <Stack.Screen name="Auth" component={AuthNavigator} />
           )}

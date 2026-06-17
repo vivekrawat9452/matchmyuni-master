@@ -129,6 +129,28 @@ export const en = {
     headline: 'Setting up your agent account',
     sub: 'This will only take a moment.',
   },
+  agentPersonalDetails: {
+    title: 'Personal detail',
+    subtitle: 'Lorem ipsum dolor sit amet,',
+    firstName: 'First name',
+    lastName: 'Last name',
+    phone: '(555) 123-4567',
+    organization: 'Organisation name',
+    firstNameMinLength: 'First name must be at least 2 characters',
+    lastNameMinLength: 'Last name must be at least 2 characters',
+  },
+  agentCountrySelect: {
+    title: 'In which country you operate?',
+    subtitle: 'Lorem ipsum dolor sit amet',
+    search: 'Search country',
+    sendRequest: 'Send Request',
+  },
+  agentQueue: {
+    headline: "You're in the queue!",
+    body: "Our team reviews every agent application personally. You'll hear from us within 48 hours via email and WhatsApp.",
+    badge: 'Most agents hear back within 1 business day',
+    contactSupport: 'Contact Support',
+  },
   comingSoon: {
     google: 'Google sign-in is not yet available in this version. Please use email.',
     apple: 'Apple sign-in is not yet available in this version. Please use email.',

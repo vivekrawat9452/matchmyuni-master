@@ -1,0 +1,20 @@
+{
+  "fileId": "pHnQspQkvUJvE9TyiQN5Zv",
+  "extractedAt": "2026-06-17",
+  "nodes": [
+    { "id": "776:3650", "key": "home_dashboard", "name": "Home (New Advisor)", "json": "node_776_3650.json", "png": "../images/home_dashboard_776_3650.png", "status": "ok" },
+    { "id": "776:8357", "key": "notifications", "name": "Notification", "json": "node_776_8357.json", "png": "../images/notifications_776_8357.png", "status": "ok" },
+    { "id": "867:979", "key": "milestones", "name": "My Milestone", "json": "node_867_979.json", "png": "../images/milestones_867_979.png", "status": "ok" },
+    { "id": "912:3115", "key": "milestones_detail", "name": "My Milestone detail", "status": "rate_limited" },
+    { "id": "811:1021", "key": "no_students", "name": "No students / Add student", "status": "rate_limited" },
+    { "id": "797:1936", "key": "students_list", "name": "Students list", "status": "rate_limited" },
+    { "id": "814:960", "key": "student_profile", "name": "Student profile", "status": "rate_limited" },
+    { "id": "859:1758", "key": "chase_dialog", "name": "Chase student dialog", "status": "rate_limited" },
+    { "id": "823:7659", "key": "student_application", "name": "Student application", "status": "rate_limited" }
+  ],
+  "imagesApi": {
+    "776:3650": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/b1b32a3b-7966-4eb0-8e09-9a731982b8fe",
+    "776:8357": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/ef6d0b93-b185-44b2-9527-436dbb78539b",
+    "867:979": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/d7c85272-a5f2-43c7-8622-bcd1051beb52"
+  }
+}

@@ -1,21 +1,20 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Alert, View, Text, StyleSheet, ActivityIndicator} from 'react-native';
 import {useNavigation, CommonActions} from '@react-navigation/native';
-import {LinearGradient} from 'react-native-linear-gradient';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {postSignup} from '../../../api/authApi';
 import {getApiErrorMessage} from '../../../api/client';
-import {useAuthStore} from '../../../stores/authStore';
 import {useOnboardingStore} from '../../../stores/onboardingStore';
 import {en} from '../../../utils/strings/en';
 import {colors} from '../../../utils/colors';
 import {font, hp, space, hPad} from '../../../utils/sizes';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import type {AuthStackParamList} from '../../../navigation/authTypes';
 
 export function AgentPreparingContainer() {
-  const navigation = useNavigation();
-  const setSession = useAuthStore(s => s.setSession);
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList, 'AgentPreparing'>>();
   const resetOnboarding = useOnboardingStore(s => s.reset);
-  const [msg, setMsg] = useState<string | undefined>('Setting up your account…');
+  const [msg, setMsg] = useState<string | undefined>('Submitting your request…');
   const ran = useRef(false);
 
   const handleError = useCallback(
@@ -45,7 +44,7 @@ export function AgentPreparingContainer() {
         setMsg('Creating your account…');
         const draft = useOnboardingStore.getState();
 
-        const {user, session} = await postSignup({
+        await postSignup({
           email: draft.email,
           firstName: draft.firstName,
           lastName: draft.lastName,
@@ -55,22 +54,18 @@ export function AgentPreparingContainer() {
           password: draft.password,
         });
 
-        await setSession({
-          accessToken: session.access_token,
-          refreshToken: session.refresh_token,
-          user,
-        });
-
         resetOnboarding();
         setMsg(undefined);
-        // AppRoot detects accessToken → auto-navigates to MainAppNavigator
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'AgentQueue'}],
+        });
       } catch (e) {
         handleError(e);
         console.log('error_009', e);
-
       }
     })();
-  }, [handleError, resetOnboarding, setSession]);
+  }, [handleError, navigation, resetOnboarding]);
 
   return <AgentPreparingScreen message={msg} />;
 }
@@ -79,16 +74,8 @@ function AgentPreparingScreen({message}: {message?: string}) {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.flex}>
-      <LinearGradient
-        colors={['#67BAA0', '#4E9A84', '#3A7A68']}
-        start={{x: 0, y: 0}}
-        end={{x: 0, y: 1}}
-        style={[styles.top, {paddingTop: insets.top + hp(4)}]}>
-        <Text style={styles.h}>{en.agentPreparing.headline}</Text>
-        <Text style={styles.s}>{en.agentPreparing.sub}</Text>
-      </LinearGradient>
-      <View style={styles.bottom}>
-        <ActivityIndicator size="large" color={colors.agentMint} />
+      <View style={[styles.center, {paddingTop: insets.top + hp(20)}]}>
+        <ActivityIndicator size="large" color={colors.primary} />
         {message ? <Text style={styles.m}>{message}</Text> : null}
       </View>
     </View>
@@ -96,29 +83,10 @@ function AgentPreparingScreen({message}: {message?: string}) {
 }
 
 const styles = StyleSheet.create({
-  flex: {flex: 1, backgroundColor: colors.white},
-  top: {
-    minHeight: hp(50),
-    paddingHorizontal: hPad(6),
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-  },
-  h: {
-    color: colors.white,
-    fontSize: font.hero,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginTop: space.lg,
-  },
-  s: {
-    color: 'rgba(255,255,255,0.95)',
-    textAlign: 'center',
-    fontSize: font.subtitle,
-    marginTop: 10,
-  },
-  bottom: {flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32},
+  flex: {flex: 1, backgroundColor: colors.background},
+  center: {flex: 1, alignItems: 'center', padding: 32},
   m: {
-    marginTop: 12,
+    marginTop: space.lg,
     textAlign: 'center',
     color: colors.textSecondary,
     fontSize: font.caption,

@@ -38,9 +38,9 @@ export function PasswordCreateContainer() {
       return;
     }
     setField('password', value);
-    // Agents collect contact details; students go straight to preferences.
+    // Agents collect personal details next; students go to account details.
     if (role === 'agent') {
-      navigation.navigate('AccountDetails');
+      navigation.navigate('AgentPersonalDetails');
     } else {
       navigation.navigate('AccountDetails');
     }
