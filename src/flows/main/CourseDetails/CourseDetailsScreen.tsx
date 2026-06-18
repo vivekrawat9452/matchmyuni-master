@@ -1,18 +1,23 @@
 /**
- * CourseDetailsScreen — pixel-perfect Figma node 416-5401
+ * CourseDetailsScreen — Figma discover_home_2_5 (node 416:5401)
  *
  * Layout (scroll):
  *  ─ Header (cream bg): ← Back  |  Course Details
  *  ─ Hero: full-width logo/photo, match+prime badges
  *  ─ Body:
- *     • Course name + university row
- *     • Stat pill row: fee / scholarship / visa / duration
- *     • "Why you match" bullets (green ✓ / orange ↑)
- *     • "Why Prime" amber card  (if isPrime)
+ *     • Course name + university row + scholarship chip
+ *     • Estimated yearly cost card (GET /courses/:id fees)
+ *     • Stat pill row: scholarship / duration (GET /courses/:id)
+ *     • "Why you match" bullets (GET /recommendations/discover whyMatch when passed)
  *     • "Course Overview" + meta table
- *     • "✦ Scholarship Available" teal card (if scholarship)
+ *     • "✦ Scholarship Available" teal card (GET /courses/:id scholarshipDetails)
  *     • "Entry Requirements" table rows
  *  ─ Sticky footer: [Shortlist]  [Start Application →]
+ *
+ * Commented out (no API in prompts/API_Docs.md):
+ *   - Cost Breakdown expander
+ *   - Visa rate stat
+ *   - Why Prime card
  */
 import React, {memo} from 'react';
 import {
@@ -42,12 +47,55 @@ const H_PAD = hPad(5);
 export type CourseDetailsScreenProps = {
   course: CourseListItem | null | undefined;
   matchPct: number;
+  whyMatch?: string[];
   loading: boolean;
   isShortlisted?: boolean;
   onBack: () => void;
   onShortlist: () => void;
   onStartApplication: () => void;
 };
+
+function scholarshipPercent(course: CourseListItem): number {
+  const details = course.scholarshipDetails;
+  if (details?.percentageMax != null) {
+    return details.percentageMax;
+  }
+  const legacy = course.scholarshipOnTuitionFee?.match(/(\d+)/);
+  return legacy ? parseInt(legacy[1], 10) : 0;
+}
+
+function scholarshipChipLabel(course: CourseListItem): string | null {
+  const pct = scholarshipPercent(course);
+  if (pct > 0) {
+    return `${pct}% scholarship`;
+  }
+  if (course.scholarshipAvailable) {
+    return 'Scholarship available';
+  }
+  return null;
+}
+
+function scholarshipStatLabel(course: CourseListItem): string | null {
+  const details = course.scholarshipDetails;
+  if (details?.percentageMax != null) {
+    return `Up to ${details.percentageMax}%`;
+  }
+  if (course.scholarshipOnTuitionFee) {
+    return `Up to ${course.scholarshipOnTuitionFee}`;
+  }
+  return null;
+}
+
+function scholarshipPromoText(course: CourseListItem, pct: number): string | null {
+  if (pct <= 0) {
+    return null;
+  }
+  const years =
+    course.scholarshipDetails?.validForYears === 'all_years'
+      ? 'All years'
+      : course.scholarshipDetails?.validForYears?.replace(/_/g, ' ') ?? 'All years';
+  return `${pct}% off - Auto applied - ${years}`;
+}
 
 // ─── Small helpers ─────────────────────────────────────────────────────────────
 
@@ -94,7 +142,17 @@ const tr = StyleSheet.create({
   },
 });
 
-/** "Why you match" bullet with icon */
+/** "Why you match" bullet from GET /recommendations/discover */
+function WhyMatchBullet({text}: {text: string}) {
+  return (
+    <View style={mb.row}>
+      <CheckCircleIcon size={22} color={colors.tagGreen} />
+      <Text style={mb.text}>{text}</Text>
+    </View>
+  );
+}
+
+/** Fallback bullet — wire when user-journey API is available */
 function MatchBullet({
   type,
   prefix,
@@ -131,6 +189,7 @@ const mb = StyleSheet.create({
 export const CourseDetailsScreen = memo(function CourseDetailsScreen({
   course,
   matchPct,
+  whyMatch = [],
   loading,
   isShortlisted = false,
   onBack,
@@ -157,13 +216,17 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
 
   const sym = course.currencySymbol ?? '$';
   const feeVal = course.applicableTuitionFee;
+  const pct = scholarshipPercent(course);
   const fee = feeVal != null ? `${sym}${Number(feeVal).toLocaleString()}` : null;
-  const schPct = course.scholarshipOnTuitionFee?.match(/(\d+)/);
-  const pct = schPct ? parseInt(schPct[1], 10) : 0;
   const listedFee =
     feeVal != null && pct > 0 && pct < 100
       ? `${sym}${Math.round(feeVal / (1 - pct / 100)).toLocaleString()}`
       : null;
+  const schChip = scholarshipChipLabel(course);
+  const schStat = scholarshipStatLabel(course);
+  const promoText = scholarshipPromoText(course, pct);
+  const showScholarshipCard =
+    course.scholarshipAvailable === true || pct > 0 || !!course.scholarshipOnTuitionFee;
 
   const location = [course.city, course.country].filter(Boolean).join(', ');
   const intake =
@@ -225,8 +288,14 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
             <View style={s.uniDot} />
             <Text style={s.uniName}>{course.universityName?.toUpperCase()}</Text>
           </View>
+          {schChip ? (
+            <View style={s.schChipRow}>
+              <CheckCircleIcon size={14} color={colors.tagGreen} />
+              <Text style={s.schChipText}>{schChip}</Text>
+            </View>
+          ) : null}
 
-          {/* Estimated yearly cost card */}
+          {/* Estimated yearly cost card — GET /courses/:id applicableTuitionFee */}
           {fee ? (
             <View style={s.costCard}>
               <Text style={s.costLabel}>Estimated yearly cost</Text>
@@ -237,47 +306,59 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
               {listedFee ? (
                 <Text style={s.costListed}>Listed at {listedFee}</Text>
               ) : null}
-              {pct > 0 ? (
+              {promoText ? (
                 <View style={s.costPromo}>
-                  <Text style={s.costPromoText}>
-                    {pct}% off - Auto applied - All years
-                  </Text>
+                  <Text style={s.costPromoText}>{promoText}</Text>
                 </View>
               ) : null}
+              {/* Cost Breakdown — no dedicated endpoint in prompts/API_Docs.md; uncomment when API ships
               <Pressable style={s.costBreakdownRow} hitSlop={8}>
                 <Text style={s.costBreakdownLabel}>Cost breakdown</Text>
                 <ChevronDown size={18} color={colors.textSecondary} />
               </Pressable>
+              */}
             </View>
           ) : null}
 
-          {/* Stats row */}
-          <View style={s.statsCard}>
-            {course.scholarshipOnTuitionFee ? (
-              <View style={s.statCol}>
-                <Text style={s.statValueAccent}>
-                  Up to {course.scholarshipOnTuitionFee}
-                </Text>
-                <Text style={s.statLabel}>Scholarship</Text>
-              </View>
-            ) : null}
-            {course.country ? (
-              <View style={[s.statCol, s.statColBorder]}>
-                <Text style={s.statValueGreen}>89%</Text>
-                <Text style={s.statLabel}>Visa rate</Text>
-              </View>
-            ) : null}
-            {course.duration ? (
-              <View style={[s.statCol, s.statColBorder]}>
-                <Text style={s.statValue}>
-                  {course.duration} year{course.duration > 1 ? 's' : ''}
-                </Text>
-                <Text style={s.statLabel}>Duration</Text>
-              </View>
-            ) : null}
-          </View>
+          {/* Stats row — scholarship + duration from GET /courses/:id */}
+          {(schStat || course.duration || course.country) ? (
+            <View style={s.statsCard}>
+              {schStat ? (
+                <View style={s.statCol}>
+                  <Text style={s.statValueAccent}>{schStat}</Text>
+                  <Text style={s.statLabel}>Scholarship</Text>
+                </View>
+              ) : null}
+              {/* Visa rate — no field in prompts/API_Docs.md or prompts/apis; uncomment when API ships
+              {course.country ? (
+                <View style={[s.statCol, s.statColBorder]}>
+                  <Text style={s.statValueGreen}>89%</Text>
+                  <Text style={s.statLabel}>Visa rate</Text>
+                </View>
+              ) : null}
+              */}
+              {course.duration ? (
+                <View style={[s.statCol, schStat ? s.statColBorder : null]}>
+                  <Text style={s.statValue}>
+                    {course.duration} year{course.duration > 1 ? 's' : ''}
+                  </Text>
+                  <Text style={s.statLabel}>Duration</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
 
-          {/* Why you match */}
+          {/* Why you match — active when whyMatch passed from GET /recommendations/discover */}
+          {whyMatch.length > 0 ? (
+            <View style={s.section}>
+              <SectionTitle>Why you match</SectionTitle>
+              {whyMatch.map(line => (
+                <WhyMatchBullet key={line} text={line} />
+              ))}
+            </View>
+          ) : null}
+
+          {/* Why you match fallback — no user-journey endpoint; uncomment when API ships
           <View style={s.section}>
             <SectionTitle>Why you match</SectionTitle>
             {course.category ? (
@@ -298,11 +379,13 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
               <MatchBullet
                 type="orange"
                 prefix="High visa approval rate for this destination"
+                highlight="89% success"
               />
             ) : null}
           </View>
+          */}
 
-          {/* Why Prime */}
+          {/* Why Prime — no user-journey endpoint; uncomment when API ships
           {course.isPrime ? (
             <View style={[s.section, s.amberCard]}>
               <Text style={s.amberTitle}>Why Prime</Text>
@@ -312,6 +395,7 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
               </Text>
             </View>
           ) : null}
+          */}
 
           {/* Course Overview */}
           <View style={s.section}>
@@ -341,8 +425,8 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
             ) : null}
           </View>
 
-          {/* Scholarship Available */}
-          {course.scholarshipOnTuitionFee ? (
+          {/* Scholarship Available — GET /courses/:id scholarshipDetails */}
+          {showScholarshipCard ? (
             <View style={[s.section, s.scholarshipCard]}>
               <View style={s.scholarshipAccent} />
               <View style={s.scholarshipBody}>
@@ -351,8 +435,8 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
                   <Text style={s.scholarshipTitle}>Scholarship Available</Text>
                 </View>
                 <Text style={s.scholarshipText}>
-                  Global scholarship award — up to {course.scholarshipOnTuitionFee}{' '}
-                  tuition reduction for international students.
+                  {course.scholarshipDetails?.description ??
+                    `Global scholarship award — up to ${schStat ?? `${pct}%`} tuition reduction for international students.`}
                 </Text>
                 <Pressable hitSlop={8}>
                   <Text style={s.scholarshipLink}>Check eligibility →</Text>
@@ -370,7 +454,10 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
               ) : (
                 <TableRow label="Minimum GPA" value="3.5 / 4.0" />
               )}
-              <TableRow label="English Proficiency" value="IELTS 6.5+" />
+              <TableRow
+                label="English Proficiency"
+                value={course.additionalRequirements ?? 'IELTS 6.5+'}
+              />
               {course.applicationFee ? (
                 <TableRow
                   label="Application Fee"
@@ -504,6 +591,17 @@ const s = StyleSheet.create({
     letterSpacing: 0.4,
     flexShrink: 1,
   },
+  schChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
+  schChipText: {
+    fontSize: FontSizes.caption,
+    fontWeight: Weights.semibold,
+    color: colors.tagGreen,
+  },
 
   costCard: {
     backgroundColor: colors.white,
@@ -531,6 +629,7 @@ const s = StyleSheet.create({
     paddingVertical: 8,
   },
   costPromoText: {fontSize: FontSizes.caption, fontWeight: Weights.semibold, color: colors.tagGreen},
+  // Cost Breakdown — uncomment when API ships
   costBreakdownRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -592,7 +691,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
   },
 
-  // Amber (Why Prime)
+  // Why Prime — uncomment when user-journey API ships
   amberCard: {
     backgroundColor: '#FFFBEB',
     borderWidth: 1,

@@ -46,15 +46,50 @@ function extractUploadErrorMessage(body: unknown): string | null {
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 
+const USER_ME_LOG = '[GET /user/me]';
+
 export async function getUserMe() {
-  const {data} = await apiClient.get<ApiEnvelope<UserDto>>('/user/me');
-  return unwrapEnvelope(data) ?? (data as UserDto);
+  console.log(USER_ME_LOG, 'request');
+  try {
+    const res = await apiClient.get<ApiEnvelope<UserDto>>('/user/me');
+    const unwrapped =
+      unwrapEnvelope(res.data) ?? (res.data as unknown as UserDto);
+    console.log(USER_ME_LOG, 'response', {
+      httpStatus: res.status,
+      envelopeStatus: res.data?.status,
+      userId: unwrapped?.id,
+      studentId: unwrapped?.studentId,
+      firstName: unwrapped?.firstName,
+      lastName: unwrapped?.lastName,
+      email: unwrapped?.email,
+    });
+    return unwrapped;
+  } catch (err) {
+    console.error(USER_ME_LOG, 'failed', err);
+    throw err;
+  }
 }
+
+const USER_DETAILS_LOG = '[GET /user/details]';
 
 /** Full user details including student profile */
 export async function getUserDetails() {
-  const {data} = await apiClient.get<ApiEnvelope<UserDetailsDto>>('/user/details');
-  return unwrapEnvelope(data) ?? (data as UserDetailsDto);
+  console.log(USER_DETAILS_LOG, 'request');
+  try {
+    const res = await apiClient.get<ApiEnvelope<UserDetailsDto>>('/user/details');
+    const details =
+      unwrapEnvelope(res.data) ?? (res.data as unknown as UserDetailsDto);
+    console.log(USER_DETAILS_LOG, 'response', {
+      httpStatus: res.status,
+      userId: details?.user?.id,
+      hasStudentProfile: details?.studentProfile != null,
+      preferredIntake: details?.studentProfile?.preferredIntake,
+    });
+    return details;
+  } catch (err) {
+    console.error(USER_DETAILS_LOG, 'failed', err);
+    throw err;
+  }
 }
 
 // ─── Student Profile ──────────────────────────────────────────────────────────
@@ -69,41 +104,90 @@ export async function patchStudentProfile(body: StudentProfileUpdatePayload) {
 
 // ─── Applications ─────────────────────────────────────────────────────────────
 
+const APPLICATIONS_LOG = '[GET /applications]';
+const APPLICATIONS_BY_IDS_LOG = '[GET /applications/by-ids]';
+const CREATE_APPLICATION_LOG = '[POST /applications/create]';
+
 /** GET /applications — grouped by fee payment status (applications-student-apis.md) */
 export async function getApplications(): Promise<ApplicationsGroupedDto> {
-  const {data} = await apiClient.get<
-    ApiEnvelope<ApplicationsGroupedDto | ApplicationDto[]>
-  >('/applications');
-  const body = unwrapEnvelope(data);
-  if (body && typeof body === 'object' && 'unpaid' in body) {
-    return {
-      unpaid: asArray(body.unpaid),
-      pending: asArray(body.pending),
-      paid: asArray(body.paid),
-    };
+  console.log(APPLICATIONS_LOG, 'request');
+  try {
+    const res = await apiClient.get<
+      ApiEnvelope<ApplicationsGroupedDto | ApplicationDto[]>
+    >('/applications');
+    const body = unwrapEnvelope(res.data);
+    let grouped: ApplicationsGroupedDto;
+    if (body && typeof body === 'object' && 'unpaid' in body) {
+      grouped = {
+        unpaid: asArray(body.unpaid),
+        pending: asArray(body.pending),
+        paid: asArray(body.paid),
+      };
+    } else {
+      const flat = asArray(body as ApplicationDto[] | null);
+      grouped = {
+        unpaid: [],
+        pending: [],
+        paid: flat as unknown as ApplicationsGroupedDto['paid'],
+      };
+    }
+    console.log(APPLICATIONS_LOG, 'response', {
+      httpStatus: res.status,
+      unpaid: grouped.unpaid.length,
+      pending: grouped.pending.length,
+      paid: grouped.paid.length,
+    });
+    return grouped;
+  } catch (err) {
+    console.error(APPLICATIONS_LOG, 'failed', err);
+    throw err;
   }
-  const flat = asArray(body as ApplicationDto[] | null);
-  return {unpaid: [], pending: [], paid: flat as unknown as ApplicationsGroupedDto['paid']};
 }
 
 export async function getApplicationsByIds(
   ids: string[],
 ): Promise<ApplicationDetailDto[]> {
-  const {data} = await apiClient.get<ApiEnvelope<ApplicationDetailDto[]>>(
-    '/applications/by-ids',
-    {params: {ids: ids.join(',')}},
-  );
-  return asArray(unwrapEnvelope(data));
+  console.log(APPLICATIONS_BY_IDS_LOG, 'request', {ids});
+  try {
+    const res = await apiClient.get<ApiEnvelope<ApplicationDetailDto[]>>(
+      '/applications/by-ids',
+      {params: {ids: ids.join(',')}},
+    );
+    const details = asArray(unwrapEnvelope(res.data));
+    console.log(APPLICATIONS_BY_IDS_LOG, 'response', {
+      httpStatus: res.status,
+      count: details.length,
+      applicationIds: details.map(d => d.application?.id),
+      feeTypes: details.flatMap(d =>
+        (d.applicationFees ?? []).map(f => f.feeType),
+      ),
+    });
+    return details;
+  } catch (err) {
+    console.error(APPLICATIONS_BY_IDS_LOG, 'failed', {ids, err});
+    throw err;
+  }
 }
 
-/** POST /applications/create — body: `{ courseId }` only (API_Docs.md) */
+/** POST /applications/create — body: `{ courseId, intakeId? }` (applications-student-apis.md) */
 export async function createApplication(payload: CreateApplicationPayload) {
+  console.log(CREATE_APPLICATION_LOG, 'request', payload);
   const {data} = await apiClient.post<
     ApiEnvelope<CreatedApplicationDto> | CreatedApplicationDto
-  >('/applications/create', {courseId: payload.courseId});
+  >('/applications/create', {
+    courseId: payload.courseId,
+    ...(payload.intakeId != null ? {intakeId: payload.intakeId} : {}),
+  });
   const created = unwrapEnvelope(data);
   if (created && typeof created === 'object' && 'id' in created) {
-    return created as CreatedApplicationDto;
+    const app = created as CreatedApplicationDto;
+    console.log(CREATE_APPLICATION_LOG, 'response', {
+      id: app.id,
+      courseId: app.courseId,
+      intakeId: app.intakeId,
+      status: app.status,
+    });
+    return app;
   }
   throw new Error('Invalid application create response');
 }
@@ -127,9 +211,41 @@ export async function getPaymentHistory(params?: {page?: number; limit?: number}
 
 // ─── Documents ────────────────────────────────────────────────────────────────
 
+const USER_DOCUMENTS_LOG = '[GET /user/documents]';
+const UPLOAD_DOCUMENTS_LOG = '[POST /user/documents]';
+
+/** Allowed MIME types per prompts/apis/user-documents.md */
+const ALLOWED_UPLOAD_MIMES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+]);
+
+function normalizeUploadMime(mime: string | undefined): string {
+  const raw = (mime || 'application/pdf').trim().toLowerCase();
+  if (raw === 'image/jpg') {
+    return 'image/jpeg';
+  }
+  return raw;
+}
+
 export async function getUserDocuments() {
-  const {data} = await apiClient.get<ApiEnvelope<UserDocumentDto[]>>('/user/documents');
-  return asArray(unwrapEnvelope(data));
+  console.log(USER_DOCUMENTS_LOG, 'request');
+  try {
+    const res = await apiClient.get<ApiEnvelope<UserDocumentDto[]>>('/user/documents');
+    const docs = asArray(unwrapEnvelope(res.data));
+    console.log(USER_DOCUMENTS_LOG, 'response', {
+      httpStatus: res.status,
+      count: docs.length,
+      types: docs.map(d => d.documentType),
+    });
+    return docs;
+  } catch (err) {
+    console.error(USER_DOCUMENTS_LOG, 'failed', err);
+    throw err;
+  }
 }
 
 /**
@@ -152,22 +268,40 @@ export async function uploadDocuments(
     throw new Error('Maximum 10 files per upload');
   }
 
+  const normalizedFiles = files.map(f => {
+    const type = normalizeUploadMime(f.type);
+    return {...f, type};
+  });
+
+  for (const f of normalizedFiles) {
+    if (!ALLOWED_UPLOAD_MIMES.has(f.type)) {
+      console.warn(UPLOAD_DOCUMENTS_LOG, 'mime not in allow-list', {
+        mime: f.type,
+        name: f.name,
+        allowed: [...ALLOWED_UPLOAD_MIMES],
+      });
+    }
+  }
+
+  console.log(UPLOAD_DOCUMENTS_LOG, 'request', {
+    documentType,
+    fileCount: normalizedFiles.length,
+    files: normalizedFiles.map(f => ({
+      name: f.name,
+      type: f.type,
+      uriPrefix: normalizeUploadUri(f.uri).slice(0, 48),
+    })),
+  });
+
   const form = new FormData();
-  for (const f of files) {
+  for (const f of normalizedFiles) {
     form.append('files', {
       uri: uriForFormDataUpload(f.uri),
       name: f.name,
       type: f.type || 'application/octet-stream',
     } as unknown as Blob);
+    // prompts/apis/user-documents.md — parallel `documentTypes` entry per file
     form.append('documentTypes', documentType);
-  }
-
-  if (__DEV__) {
-    const first = files[0];
-    const uri = normalizeUploadUri(first.uri);
-    console.log(
-      `[uploadDocuments] type=${documentType} files=${files.length} name=${first.name} mime=${first.type} uri=${uri.slice(0, 60)}`,
-    );
   }
 
   try {
@@ -176,15 +310,31 @@ export async function uploadDocuments(
       form,
       {timeoutMs: 60_000},
     );
-    if (__DEV__) {
-      console.log('[uploadDocuments] success', {documentType, count: files.length});
-    }
-    return asArray(unwrapEnvelope(data));
+    const uploaded = asArray(unwrapEnvelope(data));
+    console.log(UPLOAD_DOCUMENTS_LOG, 'response', {
+      documentType,
+      httpEnvelopeStatus: data?.status,
+      uploadedCount: uploaded.length,
+      ids: uploaded.map(d => d.id),
+      types: uploaded.map(d => d.documentType),
+      filenames: uploaded.map(d => d.filename),
+    });
+    return uploaded;
   } catch (err) {
-    const bodyMsg =
+    const axBody =
       err && typeof err === 'object' && 'response' in err
-        ? extractUploadErrorMessage((err as {response?: {data?: unknown}}).response?.data)
+        ? (err as {response?: {status?: number; data?: unknown}}).response
         : null;
+    const bodyMsg = axBody?.data
+      ? extractUploadErrorMessage(axBody.data)
+      : null;
+    console.error(UPLOAD_DOCUMENTS_LOG, 'failed', {
+      documentType,
+      fileCount: normalizedFiles.length,
+      httpStatus: axBody?.status,
+      message: bodyMsg ?? (err instanceof Error ? err.message : String(err)),
+      responseBody: axBody?.data,
+    });
     if (bodyMsg) {
       throw new Error(bodyMsg);
     }

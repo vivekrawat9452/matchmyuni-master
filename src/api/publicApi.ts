@@ -82,6 +82,8 @@ export async function getCourses(params?: CoursesQueryParams): Promise<CoursesPa
   return normalizeCoursesListResponse(res, limit);
 }
 
+const COURSE_DETAIL_LOG = '[GET /courses/:id]';
+
 /** GET /courses/:id — envelope or raw course object at the root. */
 function parseCourseDetailResponse(
   body: CourseListItem | ApiEnvelope<CourseListItem> | null | undefined,
@@ -94,12 +96,26 @@ function parseCourseDetailResponse(
 }
 
 export async function getCourseById(id: number): Promise<CourseListItem | null> {
+  console.log(COURSE_DETAIL_LOG, 'request', {id});
   try {
-    const {data} = await apiClient.get<CourseListItem | ApiEnvelope<CourseListItem>>(
+    const res = await apiClient.get<CourseListItem | ApiEnvelope<CourseListItem>>(
       `/courses/${id}`,
     );
-    return parseCourseDetailResponse(data);
-  } catch {
+    const course = parseCourseDetailResponse(res.data);
+    console.log(COURSE_DETAIL_LOG, 'response', {
+      httpStatus: res.status,
+      id,
+      found: course != null,
+      name: course?.name,
+      duration: course?.duration,
+      scholarshipAvailable: course?.scholarshipAvailable,
+      scholarshipDetails: course?.scholarshipDetails,
+      isPrime: course?.isPrime,
+      upcomingIntakesCount: course?.upcomingIntakes?.length ?? 0,
+    });
+    return course;
+  } catch (err) {
+    console.error(COURSE_DETAIL_LOG, 'failed', {id, err});
     return null;
   }
 }

@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {Alert} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {
@@ -14,6 +14,7 @@ import {
 
 import {
   StartApplicationScreen,
+  type FeeBreakdownRow,
   type RequiredDoc,
 } from './StartApplicationScreen';
 
@@ -29,24 +30,31 @@ import {
 import {
   createApplication,
   getApplications,
+  getApplicationsByIds,
+  getUserDetails,
   getUserDocuments,
   uploadDocuments,
   type UploadDocumentFile,
 } from '../../../api/userApi';
 
-import {countApplications} from '../../../api/applicationsUtils';
+import {
+  countApplications,
+  flattenApplicationItems,
+} from '../../../api/applicationsUtils';
 import {getApiErrorMessage} from '../../../api/client';
 import {DOCUMENT_TYPES} from '../Profile/profileConstants';
 
 import type {AppStackList} from '../../../navigation/AppStackNavigator';
 
 import type {
+  ApplicationFeeDto,
   CourseListItem,
   UpcomingIntake,
   UserDocumentDto,
 } from '../../../api/types';
 
 import {
+  deadlineRelativeLabel,
   formatDeadlineDate,
   intakesForApplication,
   pickDefaultIntake,
@@ -55,23 +63,26 @@ import {
 import {resolvePickedFileForUpload} from '../../../utils/pickedFile';
 import {en} from '../../../utils/strings/en';
 
-type Props = NativeStackScreenProps<
-  AppStackList,
-  'StartApplication'
->;
+type Props = NativeStackScreenProps<AppStackList, 'StartApplication'>;
 
+const FLOW_LOG = '[StartApplication 560:826]';
+const DOCS_LOG = '[StartApplication What you\'ll need]';
 const APPS_TOTAL = 5;
 
-function mapUploadedDocs(
-  docs: UserDocumentDto[] | undefined,
-): RequiredDoc[] {
+const FEE_TYPE_LABELS: Record<ApplicationFeeDto['feeType'], string> = {
+  application_fee: 'Application fee',
+  registration_fee: 'Registration fee',
+  tuition_fee: 'Tuition fee',
+};
+
+function logSkippedSection(section: string, reason: string) {
+  console.log(FLOW_LOG, `${section} skipped — ${reason}`);
+}
+
+function mapUploadedDocs(docs: UserDocumentDto[] | undefined): RequiredDoc[] {
   return DOCUMENT_TYPES.map(def => {
     const match = (docs ?? []).find(d =>
-      documentMatchesUiKey(
-        d.documentType,
-        def.key,
-        d.filename,
-      ),
+      documentMatchesUiKey(d.documentType, def.key, d.filename),
     );
 
     return {
@@ -81,6 +92,53 @@ function mapUploadedDocs(
       documentUrl: match?.documentUrl,
     };
   });
+}
+
+function feeRowsFromApplicationFees(
+  fees: ApplicationFeeDto[] | undefined,
+): FeeBreakdownRow[] {
+  if (!fees?.length) {
+    return [];
+  }
+  return fees.map(f => ({
+    label: FEE_TYPE_LABELS[f.feeType] ?? f.feeType,
+    amount: f.requiredAmount,
+    status: f.status,
+  }));
+}
+
+/** Projected fees from GET /courses/:id before an application exists. */
+function feeRowsFromCourse(course: CourseListItem): FeeBreakdownRow[] {
+  const rows: FeeBreakdownRow[] = [];
+
+  if (course.applicationFee != null && course.applicationFee > 0) {
+    rows.push({label: 'Application fee', amount: course.applicationFee});
+  }
+  if (course.registrationFee != null && course.registrationFee > 0) {
+    rows.push({label: 'Registration fee', amount: course.registrationFee});
+  }
+  if (course.depositFee != null && course.depositFee > 0) {
+    rows.push({label: 'Deposit fee', amount: course.depositFee});
+  }
+  if (course.applicableTuitionFee != null && course.applicableTuitionFee > 0) {
+    rows.push({label: 'Tuition (year 1)', amount: course.applicableTuitionFee});
+  }
+  if (course.examinationFee != null && course.examinationFee > 0) {
+    rows.push({label: 'Examination fee', amount: course.examinationFee});
+  }
+  if (course.hostelFee != null && course.hostelFee > 0) {
+    rows.push({label: 'Hostel fee', amount: course.hostelFee});
+  }
+  if (course.foodFee != null && course.foodFee > 0) {
+    rows.push({label: 'Food fee', amount: course.foodFee});
+  }
+  for (const other of course.otherFees ?? []) {
+    if (other.amount > 0) {
+      rows.push({label: other.name, amount: other.amount});
+    }
+  }
+
+  return rows;
 }
 
 export function StartApplicationContainer() {
@@ -109,16 +167,17 @@ export function StartApplicationContainer() {
     }
   }, [courseData]);
 
-  const [uploadingKey, setUploadingKey] = useState<string | null>(
-    null,
-  );
-
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [selectedIntake, setSelectedIntake] =
     useState<UpcomingIntake | null>(null);
 
-  /**
-   * Course Query
-   */
+  useEffect(() => {
+    logSkippedSection(
+      'Visa rate badge',
+      'no visa rate field in prompts/API_Docs.md or prompts/apis',
+    );
+  }, []);
+
   const {
     data: fetchedCourse,
     isLoading: courseLoading,
@@ -136,33 +195,80 @@ export function StartApplicationContainer() {
   const courseLoadFailed =
     !course && !courseLoading && (courseError || !passedCourse);
 
-  /**
-   * Intake Handling
-   */
-  const intakes = course
-    ? intakesForApplication(course)
-    : [];
+  useEffect(() => {
+    if (course && !courseLoading) {
+      console.log(FLOW_LOG, 'course ready', {
+        courseId: course.id,
+        source: fetchedCourse ? 'GET /courses/:id' : 'navigation courseData',
+        applicationFee: course.applicationFee,
+        registrationFee: course.registrationFee,
+        applicableTuitionFee: course.applicableTuitionFee,
+        isPrime: course.isPrime,
+        intakes: course.upcomingIntakes?.length ?? course.intakes?.length ?? 0,
+      });
+    }
+  }, [course, fetchedCourse, courseLoading]);
 
-  const activeIntake =
-    selectedIntake ?? pickDefaultIntake(intakes);
+  const {data: userDetails} = useQuery({
+    queryKey: ['userDetails'],
+    queryFn: getUserDetails,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  /**
-   * User Documents Query
-   */
+  useEffect(() => {
+    if (userDetails) {
+      console.log(FLOW_LOG, 'user context', {
+        source: 'GET /user/details',
+        userId: userDetails.user?.id,
+        hasProfile: userDetails.studentProfile != null,
+      });
+    }
+  }, [userDetails]);
+
+  const intakes = course ? intakesForApplication(course) : [];
+  const activeIntake = selectedIntake ?? pickDefaultIntake(intakes);
+
   const {data: userDocs} = useQuery({
     queryKey: ['userDocuments'],
     queryFn: getUserDocuments,
     staleTime: 5 * 60 * 1000,
   });
 
-  /**
-   * Applications Query
-   */
   const {data: applications} = useQuery({
     queryKey: ['applications'],
     queryFn: getApplications,
     staleTime: 5 * 60 * 1000,
   });
+
+  const existingApplicationId = useMemo(() => {
+    const items = flattenApplicationItems(applications);
+    return items.find(i => i.course.id === courseId)?.application.id;
+  }, [applications, courseId]);
+
+  const {data: applicationDetailsList} = useQuery({
+    queryKey: ['applicationDetails', existingApplicationId],
+    queryFn: () => getApplicationsByIds([existingApplicationId!]),
+    enabled: !!existingApplicationId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const applicationDetail = applicationDetailsList?.[0] ?? null;
+
+  useEffect(() => {
+    if (existingApplicationId && applicationDetail) {
+      console.log(FLOW_LOG, 'application detail', {
+        source: 'GET /applications/by-ids',
+        applicationId: existingApplicationId,
+        status: applicationDetail.application?.status,
+        applicationFees: applicationDetail.applicationFees,
+      });
+    } else if (!existingApplicationId && applications) {
+      logSkippedSection(
+        'GET /applications/by-ids',
+        'no existing application for this course — using GET /courses/:id fee projection',
+      );
+    }
+  }, [existingApplicationId, applicationDetail, applications]);
 
   const appsUsed = countApplications(applications);
 
@@ -171,61 +277,123 @@ export function StartApplicationContainer() {
     [userDocs],
   );
 
-  const deadlineDate = formatDeadlineDate(
+  useEffect(() => {
+    if (userDocs == null) {
+      return;
+    }
+    console.log(DOCS_LOG, 'document rows', {
+      source: 'GET /user/documents',
+      apiCount: userDocs.length,
+      apiTypes: userDocs.map(d => ({
+        type: d.documentType,
+        filename: d.filename,
+      })),
+      uiRows: requiredDocs.map(d => ({
+        key: d.key,
+        uploaded: d.uploaded,
+      })),
+    });
+  }, [userDocs, requiredDocs]);
+
+  const deadlineDate = formatDeadlineDate(activeIntake?.applicationDeadline);
+  const deadlineRelative = deadlineRelativeLabel(
     activeIntake?.applicationDeadline,
   );
 
-  /**
-   * Upload Mutation
-   */
+  const applicationBreakdown = useMemo((): FeeBreakdownRow[] => {
+    const fromApi = feeRowsFromApplicationFees(applicationDetail?.applicationFees);
+    if (fromApi.length) {
+      console.log(FLOW_LOG, 'Application Breakdown', {
+        source: 'GET /applications/by-ids applicationFees',
+        rows: fromApi.length,
+      });
+      return fromApi;
+    }
+    if (course) {
+      const projected = feeRowsFromCourse(course);
+      console.log(FLOW_LOG, 'Application Breakdown', {
+        source: 'GET /courses/:id fee fields (projected)',
+        rows: projected.length,
+      });
+      return projected;
+    }
+    return [];
+  }, [applicationDetail?.applicationFees, course]);
+
+  const applicationFeeAmount = useMemo(() => {
+    const fromDetail = applicationDetail?.applicationFees?.find(
+      f => f.feeType === 'application_fee',
+    );
+    if (fromDetail != null) {
+      return fromDetail.requiredAmount;
+    }
+    return course?.applicationFee ?? null;
+  }, [applicationDetail?.applicationFees, course?.applicationFee]);
+
+  useEffect(() => {
+    if (applicationFeeAmount == null || applicationFeeAmount === 0) {
+      logSkippedSection(
+        'Application fee card',
+        'applicationFee is 0 or absent on GET /courses/:id — UI kept commented for reuse',
+      );
+    } else {
+      console.log(FLOW_LOG, 'Application fee', {
+        source: applicationDetail
+          ? 'GET /applications/by-ids applicationFees'
+          : 'GET /courses/:id applicationFee',
+        amount: applicationFeeAmount,
+      });
+    }
+  }, [applicationFeeAmount, applicationDetail]);
+
   const {mutate: doUpload} = useMutation({
     mutationFn: ({
       documentType,
       files,
+      uiDocKey,
     }: {
       documentType: ApiDocumentType;
       files: UploadDocumentFile[];
+      uiDocKey: string;
     }) => uploadDocuments(documentType, files),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['userDocuments'],
+    onSuccess: (uploaded, {documentType, uiDocKey}) => {
+      console.log(DOCS_LOG, 'upload success', {
+        source: 'POST /user/documents',
+        uiDocKey,
+        documentType,
+        uploadedCount: uploaded.length,
+        filenames: uploaded.map(d => d.filename),
       });
-
+      queryClient.invalidateQueries({queryKey: ['userDocuments']});
       setUploadingKey(null);
     },
 
-    onError: (e: Error) => {
+    onError: (e: Error, {documentType, uiDocKey}) => {
+      console.error(DOCS_LOG, 'upload failed', {
+        source: 'POST /user/documents',
+        uiDocKey,
+        documentType,
+        error: e.message,
+      });
       setUploadingKey(null);
-
-      Alert.alert(
-        'Upload failed',
-        getApiErrorMessage(e, en.errors.generic),
-      );
+      Alert.alert('Upload failed', getApiErrorMessage(e, en.errors.generic));
     },
   });
 
-  /**
-   * Submit Application Mutation
-   */
-  const {
-    mutate: submitApplication,
-    isPending: submitting,
-  } = useMutation({
-    mutationFn: () => createApplication({courseId}),
+  const {mutate: submitApplication, isPending: submitting} = useMutation({
+    mutationFn: () => {
+      const intakeId =
+        activeIntake && activeIntake.id > 0 ? activeIntake.id : undefined;
+      return createApplication({courseId, intakeId});
+    },
 
     onSuccess: app => {
-      queryClient.invalidateQueries({
-        queryKey: ['applications'],
-      });
+      queryClient.invalidateQueries({queryKey: ['applications']});
 
-      const fee = course?.applicationFee ?? 0;
-
-      const courseName =
-        course?.name ?? route.params.courseName;
-
-      const universityName =
-        course?.universityName ?? routeUni;
+      const fee = applicationFeeAmount ?? course?.applicationFee ?? 0;
+      const courseName = course?.name ?? route.params.courseName;
+      const universityName = course?.universityName ?? routeUni;
 
       if (fee > 0) {
         navigation.replace('ApplicationPayment', {
@@ -236,7 +404,6 @@ export function StartApplicationContainer() {
           applicationFee: fee,
           currencySymbol: course?.currencySymbol,
         });
-
         return;
       }
 
@@ -255,58 +422,67 @@ export function StartApplicationContainer() {
     },
   });
 
-  /**
-   * Back Handler
-   */
   const onBack = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
-  /**
-   * Upload Document Handler
-   */
   const onUploadDoc = useCallback(
     async (docKey: string) => {
-      const apiType = uiKeyToApiDocumentType(docKey);
+      console.log(DOCS_LOG, 'upload tapped', {uiDocKey: docKey});
 
-      console.log('docKey =>', docKey);
-      console.log('apiType =>', apiType);
+      const apiType = uiKeyToApiDocumentType(docKey);
+      console.log(DOCS_LOG, 'document type mapping', {
+        uiDocKey: docKey,
+        apiDocumentType: apiType ?? null,
+        spec: 'prompts/apis/user-documents.md documentTypes',
+      });
 
       if (!apiType) {
-        Alert.alert(
-          'Error',
-          'Unsupported document type.',
-        );
+        console.error(DOCS_LOG, 'unsupported ui key — no API documentTypes mapping', {
+          uiDocKey: docKey,
+        });
+        Alert.alert('Error', 'Unsupported document type.');
         return;
       }
 
       try {
+        console.log(DOCS_LOG, 'opening file picker', {
+          allowedTypes: [
+            'application/pdf',
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/webp',
+          ],
+        });
+
         const result = await pick({
           allowMultiSelection: false,
           type: [
             'application/pdf',
             'image/jpeg',
+            'image/jpg',
             'image/png',
+            'image/webp',
           ],
         });
 
         const picked = result[0];
+        console.log(DOCS_LOG, 'file picked', {
+          name: picked?.name,
+          type: picked?.type,
+          size: picked?.size,
+          uriPrefix: picked?.uri?.slice(0, 48),
+        });
 
         if (!picked?.uri) {
-          Alert.alert(
-            'Error',
-            'Could not read the selected file.',
-          );
+          console.warn(DOCS_LOG, 'picker returned no uri');
+          Alert.alert('Error', 'Could not read the selected file.');
           return;
         }
 
-        /**
-         * Max file size: 5MB
-         */
-        if (
-          picked.size &&
-          picked.size > 5 * 1024 * 1024
-        ) {
+        if (picked.size && picked.size > 5 * 1024 * 1024) {
+          console.warn(DOCS_LOG, 'file too large', {sizeBytes: picked.size});
           Alert.alert(
             'Error',
             'File is too large. Please select a file smaller than 5MB.',
@@ -314,51 +490,58 @@ export function StartApplicationContainer() {
           return;
         }
 
-        const local =
-          await resolvePickedFileForUpload(picked);
+        const local = await resolvePickedFileForUpload(picked);
+        console.log(DOCS_LOG, 'file resolved for upload', {
+          name: local.name,
+          type: local.type,
+          uriPrefix: local.uri.slice(0, 48),
+        });
+
+        const uploadFile = {
+          uri: local.uri,
+          name: uploadFilenameForUiKey(docKey, local.name),
+          type: local.type,
+        };
 
         setUploadingKey(docKey);
 
+        console.log(DOCS_LOG, 'calling POST /user/documents', {
+          uiDocKey: docKey,
+          documentType: apiType,
+          filename: uploadFile.name,
+          mimeType: uploadFile.type,
+        });
+
         doUpload({
           documentType: apiType,
-          files: [
-            {
-              uri: local.uri,
-              name: uploadFilenameForUiKey(
-                docKey,
-                local.name,
-              ),
-              type: local.type,
-            },
-          ],
+          uiDocKey: docKey,
+          files: [uploadFile],
         });
       } catch (err) {
         if (
           isErrorWithCode(err) &&
           err.code === errorCodes.OPERATION_CANCELED
         ) {
+          console.log(DOCS_LOG, 'picker cancelled');
           return;
         }
 
+        console.error(DOCS_LOG, 'pick/resolve failed', {
+          uiDocKey: docKey,
+          error: err instanceof Error ? err.message : String(err),
+        });
+
         Alert.alert(
           'Upload failed',
-          getApiErrorMessage(
-            err,
-            'File selection failed.',
-          ),
+          getApiErrorMessage(err, 'File selection failed.'),
         );
       }
     },
     [doUpload],
   );
 
-  /**
-   * Submit Handler
-   */
   const onSubmit = useCallback(() => {
-    const allUploaded = requiredDocs.every(
-      d => d.uploaded,
-    );
+    const allUploaded = requiredDocs.every(d => d.uploaded);
 
     if (!allUploaded) {
       Alert.alert(
@@ -369,10 +552,7 @@ export function StartApplicationContainer() {
     }
 
     if (intakes.length > 0 && !activeIntake) {
-      Alert.alert(
-        'Unavailable',
-        en.applicationFlow.noIntake,
-      );
+      Alert.alert('Unavailable', en.applicationFlow.noIntake);
       return;
     }
 
@@ -382,25 +562,13 @@ export function StartApplicationContainer() {
 
     Alert.alert(
       en.applicationFlow.submitConfirmTitle,
-      en.applicationFlow.submitConfirmBody +
-        intakeNote,
+      en.applicationFlow.submitConfirmBody + intakeNote,
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Submit',
-          onPress: () => submitApplication(),
-        },
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Submit', onPress: () => submitApplication()},
       ],
     );
-  }, [
-    requiredDocs,
-    activeIntake,
-    intakes.length,
-    submitApplication,
-  ]);
+  }, [requiredDocs, activeIntake, intakes.length, submitApplication]);
 
   return (
     <StartApplicationScreen
@@ -410,8 +578,10 @@ export function StartApplicationContainer() {
       matchPct={matchPct}
       requiredDocs={requiredDocs}
       uploadingKey={uploadingKey}
-      applicationFee={course?.applicationFee}
+      applicationFee={applicationFeeAmount}
+      applicationBreakdown={applicationBreakdown}
       deadlineDate={deadlineDate}
+      deadlineRelative={deadlineRelative}
       intakes={intakes}
       selectedIntakeId={activeIntake?.id}
       onSelectIntake={setSelectedIntake}

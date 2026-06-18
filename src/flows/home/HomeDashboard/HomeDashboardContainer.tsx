@@ -1,23 +1,32 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import {Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useQuery} from '@tanstack/react-query';
 import {HomeDashboardScreen} from './HomeDashboardScreen';
-import {getUserMe, getApplications} from '../../../api/userApi';
-import {
-  flattenApplicationItems,
-  toApplicationDtos,
-} from '../../../api/applicationsUtils';
-import {getCourses} from '../../../api/publicApi';
+import {getUserMe} from '../../../api/userApi';
+import {getDiscoverRecommendations} from '../../../api/recommendationApi';
 import {useAuthStore} from '../../../stores/authStore';
 import type {CourseListItem} from '../../../api/types';
 import type {AppStackList} from '../../../navigation/AppStackNavigator';
+
+const HOME_LOG = '[Home discover_home_1_0]';
+
+/** No matching endpoint in prompts/API_Docs.md — section UI commented out in screen. */
+function logSkippedSection(section: string) {
+  console.log(HOME_LOG, `${section} skipped — no API in API_Docs.md`);
+}
 
 export function HomeDashboardContainer() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackList>>();
   const u = useAuthStore(s => s.user);
   const isAuth = !!u;
+
+  useEffect(() => {
+    logSkippedSection('User Journey');
+    logSkippedSection('Complete your profile');
+    logSkippedSection('Scholarships for You');
+  }, []);
 
   const {data: me, isLoading: meLoading, refetch: refetchMe, isRefetching: refMe} =
     useQuery({
@@ -27,71 +36,76 @@ export function HomeDashboardContainer() {
       staleTime: 5 * 60 * 1000,
     });
 
-  const {data: coursesPage, isLoading: cLoading, refetch: refetchCourses, isRefetching: refC} =
-    useQuery({
-      queryKey: ['courses', 'home'],
-      queryFn: () => getCourses({limit: 10, page: 1}),
-      staleTime: 10 * 60 * 1000,
-    });
+  const {
+    data: discoverData,
+    isLoading: discoverLoading,
+    refetch: refetchDiscover,
+    isRefetching: refDiscover,
+  } = useQuery({
+    queryKey: ['home', 'discover'],
+    queryFn: () => getDiscoverRecommendations({page: 1, pageSize: 10}),
+    enabled: isAuth,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const {data: applications, refetch: refetchApps, isRefetching: refA} =
-    useQuery({
-      queryKey: ['applications'],
-      queryFn: getApplications,
-      enabled: isAuth,
-      staleTime: 5 * 60 * 1000,
-      select: grouped => toApplicationDtos(flattenApplicationItems(grouped)),
-    });
+  const matchCourses = useMemo(
+    () =>
+      (discoverData?.results ?? []).map(r => ({
+        ...r.course,
+        id: r.course.id ?? r.courseId,
+        matchPct: r.matchScore,
+      })),
+    [discoverData?.results],
+  );
+
+  const displayName = useMemo(() => {
+    const first = me?.firstName ?? u?.firstName ?? '';
+    const last = me?.lastName ?? u?.lastName ?? '';
+    if (first && last) {
+      return `${first} ${last.charAt(0)}`;
+    }
+    return first || 'Student';
+  }, [me?.firstName, me?.lastName, u?.firstName, u?.lastName]);
 
   const onRefresh = useCallback(() => {
     void refetchMe();
-    void refetchCourses();
-    void refetchApps();
-  }, [refetchMe, refetchCourses, refetchApps]);
+    void refetchDiscover();
+  }, [refetchMe, refetchDiscover]);
 
   const onOpenCourse = useCallback(
-    (c: CourseListItem) => {
+    (c: CourseListItem & {matchPct?: number}) => {
+      const matchResult = discoverData?.results?.find(
+        r => (r.course.id ?? r.courseId) === c.id,
+      );
       navigation.navigate('CourseDetails', {
-        courseId:   c.id,
-        matchPct:   88,
+        courseId: c.id,
+        matchPct: c.matchPct ?? matchResult?.matchScore ?? 0,
         courseData: JSON.stringify(c),
+        whyMatchData: JSON.stringify(matchResult?.whyMatch ?? []),
       });
     },
-    [navigation],
+    [navigation, discoverData?.results],
   );
-
-  const onViewMatches = useCallback(() => {
-    navigation.navigate('Tabs', {screen: 'DiscoverTab'} as never);
-  }, [navigation]);
 
   const onSeeAllMatches = useCallback(() => {
     navigation.navigate('Tabs', {screen: 'DiscoverTab'} as never);
-  }, [navigation]);
-
-  const onCompleteProfile = useCallback(() => {
-    navigation.navigate('Tabs', {screen: 'ProfileTab'} as never);
   }, [navigation]);
 
   const onBell = useCallback(() => {
     Alert.alert('Notifications', 'No new notifications.');
   }, []);
 
-  const firstName =
-    (me as {firstName?: string} | undefined)?.firstName ?? u?.firstName ?? '';
-
   return (
     <HomeDashboardScreen
-      firstName={firstName}
-      courses={coursesPage?.courses}
-      applications={applications}
-      loading={meLoading || cLoading}
-      refreshing={refMe || refC || refA}
+      displayName={displayName}
+      matchCourses={matchCourses}
+      hasPreferences={discoverData?.hasPreferences === true}
+      loading={meLoading || discoverLoading}
+      refreshing={refMe || refDiscover}
       onRefresh={onRefresh}
       onSearchPress={() => navigation.navigate('Tabs', {screen: 'DiscoverTab'} as never)}
       onOpenCourse={onOpenCourse}
-      onViewMatches={onViewMatches}
       onSeeAllMatches={onSeeAllMatches}
-      onCompleteProfile={onCompleteProfile}
       onBell={onBell}
     />
   );

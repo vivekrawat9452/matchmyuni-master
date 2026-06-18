@@ -111,6 +111,24 @@ export interface UpcomingIntake {
   startDate?: string | null;
 }
 
+/** GET /courses/:id — prompts/apis/courses-student-apis.md */
+export interface ScholarshipDetails {
+  percentageMin?: number;
+  percentageMax?: number;
+  description?: string;
+  appliesTo?: string;
+  validForYears?: string;
+  renewalCondition?: string | null;
+  additionalNotes?: string | null;
+}
+
+export interface CourseOtherFee {
+  name: string;
+  amount: number;
+  required?: boolean;
+  frequency?: string;
+}
+
 export interface CourseListItem {
   id: number;
   universityId: number;
@@ -125,6 +143,12 @@ export interface CourseListItem {
   city?: string;
   applicableTuitionFee?: number;
   applicationFee?: number;
+  registrationFee?: number | null;
+  depositFee?: number | null;
+  examinationFee?: number | null;
+  hostelFee?: number | null;
+  foodFee?: number | null;
+  otherFees?: CourseOtherFee[];
   currency?: string;
   currencySymbol?: string;
   category?: string;
@@ -134,9 +158,13 @@ export interface CourseListItem {
   upcomingIntakes?: UpcomingIntake[];
   offerTime?: string;
   minimumGPA?: string;
+  minimumLevelOfEducation?: string;
+  additionalRequirements?: string;
   language?: string;
   scholarshipOnTuitionFee?: string;
   scholarshipAvailable?: boolean;
+  scholarshipType?: string;
+  scholarshipDetails?: ScholarshipDetails | null;
   isPrime?: boolean;
   tags?: string[];
 }
@@ -352,6 +380,8 @@ export interface CreatedApplicationDto {
 
 export interface CreateApplicationPayload {
   courseId: number;
+  /** Required by POST /applications/create when course has API intakes */
+  intakeId?: number;
 }
 
 export interface ShortlistEntryDto {

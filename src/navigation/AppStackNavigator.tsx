@@ -27,7 +27,13 @@ export type AppStackList = {
   /** Bottom tab navigator */
   Tabs: undefined;
   /** Course detail — opened from Discover card or Home top-matches */
-  CourseDetails: {courseId: number; matchPct?: number; courseData?: string};
+  CourseDetails: {
+    courseId: number;
+    matchPct?: number;
+    courseData?: string;
+    /** JSON string[] from GET /recommendations/discover `whyMatch` */
+    whyMatchData?: string;
+  };
   /** Application start wizard — opened from CourseDetails */
   StartApplication: {
     courseId: number;

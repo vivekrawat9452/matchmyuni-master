@@ -695,6 +695,16 @@ export function DiscoverContainer() {
     return map;
   }, [discoverData?.results]);
 
+  const whyMatchByCourseId = useMemo(() => {
+    const map: Record<number, string[]> = {};
+    discoverData?.results?.forEach(r => {
+      if (r.whyMatch?.length) {
+        map[r.courseId] = r.whyMatch;
+      }
+    });
+    return map;
+  }, [discoverData?.results]);
+
   const courses = useMemo(() => {
     if (useFilteredBrowse) {
       return coursesPage?.courses ?? [];
@@ -778,11 +788,12 @@ export function DiscoverContainer() {
   const onTap = useCallback(
     (c: CourseListItem) =>
       navigation.navigate('CourseDetails', {
-        courseId:   c.id,
-        matchPct:   matchByCourseId[c.id] ?? 88,
+        courseId: c.id,
+        matchPct: matchByCourseId[c.id] ?? 88,
         courseData: JSON.stringify(c),
+        whyMatchData: JSON.stringify(whyMatchByCourseId[c.id] ?? []),
       }),
-    [matchByCourseId, navigation],
+    [matchByCourseId, whyMatchByCourseId, navigation],
   );
 
   // ── Filter handlers ───────────────────────────────────────────────────────

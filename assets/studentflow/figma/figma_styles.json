@@ -1,0 +1,443 @@
+{
+  "10:327": {
+    "key": "a7788e6e250068d8b385890b7ff827644c40a131",
+    "name": "M3/sys/light/on-surface",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:66": {
+    "key": "89ba00d5fe9d8bd49667b52a3040180c47db1773",
+    "name": "M3/sys/light/on-surface-variant",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:1569": {
+    "key": "8079fe2bb4ae6fec1a4b2479286e78cb395b89f9",
+    "name": "M3/display/small",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "12:796": {
+    "key": "86640243a9bbd68ce43575cceb59e4256dfec4f3",
+    "name": "M3/title/medium",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "8:324": {
+    "key": "2367cdd54630d1af4dc0d022ff3b294f9eac9f9b",
+    "name": "Margin gride",
+    "styleType": "GRID",
+    "remote": false,
+    "description": ""
+  },
+  "30:1102": {
+    "key": "62499973200bc94f46c7a8149d110a6048305a4c",
+    "name": "H2/Bold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "30:1104": {
+    "key": "0caad3ebb22a3f389535808ff8e86a302b887103",
+    "name": "H2/Semibold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "31:1106": {
+    "key": "c4a7645dae4edb8e1e857a478031c5e2673bdd05",
+    "name": "H3/Bold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "31:1107": {
+    "key": "4ed5657b7df88af2345edddacc889918fc1c6331",
+    "name": "H3/Semibold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "34:938": {
+    "key": "16611951170be5237f3bafbccc3a830cdf0cf0c7",
+    "name": "H4/bold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "34:940": {
+    "key": "b50c1a95bd7c8f3161b8c932f165d7b09e44b351",
+    "name": "H4/Semibold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "34:944": {
+    "key": "35cd727914f71d73e8fdd578f9eaa1e89d3bc84f",
+    "name": "P1/Semibold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "34:943": {
+    "key": "85886a391d891e0aa0b3d53dc008236fd866ec0a",
+    "name": "P1/Medium",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "34:947": {
+    "key": "ea7b193c4159ec00a44ba698cde9c8339beef8d7",
+    "name": "P2/Bold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "34:948": {
+    "key": "a8c4feb17abaea935318414531998099b5a69a47",
+    "name": "P2/Semibold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "34:949": {
+    "key": "69d4cf06cebd9659d45a4af6c445129a6bbd3032",
+    "name": "P2/Medium",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "30:1098": {
+    "key": "d9ef78674f55c6dc9307344fd95f890be839d8df",
+    "name": "Title (Bold)",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "30:1099": {
+    "key": "2309a95610a90a0483c5fd77bf15f33fb6d33dd2",
+    "name": "H1/bold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "7:5": {
+    "key": "5a9ba25094279811570efb7e3a577656758f3c01",
+    "name": "Default/Bold/Subheadline",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "297:17875": {
+    "key": "c94bfc2aeb1552e5488186dc4028a1ac0febb92a",
+    "name": "P1/Bold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "16:2506": {
+    "key": "21fde2be8aed6aa7fe2631395ad1f6710dc118e2",
+    "name": "Label Color/Light/Secondary",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "16:2505": {
+    "key": "034c610e7a43b2e6c457ab7f9ff347a36ea858ff",
+    "name": "System Background/Light/Secondary",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "302:23855": {
+    "key": "9f2204a10395e3b5cab4bb65e87ca4b85d69d28c",
+    "name": "Caption/Medium",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "30:1101": {
+    "key": "45ebaf76305a3d8bb1db145dd409445067c0ba96",
+    "name": "H1/Semibold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "302:24356": {
+    "key": "fc12cb11052e890bb010f7061c0eb35fb844d7a5",
+    "name": "Caption/Bold",
+    "styleType": "TEXT",
+    "remote": false,
+    "description": ""
+  },
+  "63:7850": {
+    "key": "786da65add773e921c3fa156e41166c8c227abb8",
+    "name": "M3/headline/medium-emphasized",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "12:802": {
+    "key": "5afceec95267887a6a779afde1b75400180752f8",
+    "name": "M3/label/large",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "12:76": {
+    "key": "6d152883d5f7e827add2e91513fd9a90bf762baa",
+    "name": "M3/title/large",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "63:6784": {
+    "key": "65f6c0dca8f8e1d4a89568aaf658c9174a5dde82",
+    "name": "M3/sys/light/surface",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:1441": {
+    "key": "334e988d5dafc281254c84f5db39fe794e1c22ba",
+    "name": "M3/.add-on/placeholder image",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "63:7854": {
+    "key": "b76695fa0751273d64b89c4cda4ab85bfe899260",
+    "name": "M3/ref/neutral/neutral100",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "63:7082": {
+    "key": "bd0974d595e73632a299202f3cc2c8c49d13cec8",
+    "name": "M3/label/small",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "12:1472": {
+    "key": "4aeaa89a2f980c69d11b84a0e2a4f1268119c277",
+    "name": "M3/body/large",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "63:7088": {
+    "key": "1e92164361231ef1ed79f8fd256e78e0f6fbf250",
+    "name": "M3/body/medium",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "63:7934": {
+    "key": "096f97a28047464f9ae9093037838744a1ff1eb8",
+    "name": "M3/sys/light/on-secondary-container",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "63:7102": {
+    "key": "efc367bf311007161add74dd1c10f644449c5d57",
+    "name": "M3/sys/light/secondary-container",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:1464": {
+    "key": "391564713c673eefe06acb0b1ac2d888b9f3156b",
+    "name": "M3/sys/light/surface-container-high",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "63:8622": {
+    "key": "f6e7724699f83aee2e6cf6ab1ebb3eb1c88096ad",
+    "name": "M3/title/small",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "63:7098": {
+    "key": "4ee182c0ddb06633c3f4beacffdc9c5306924b51",
+    "name": "M3/body/small",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": "0.4"
+  },
+  "63:8623": {
+    "key": "7bb73c4f913012ecce729348e644d6770e941f28",
+    "name": "M3/title/small",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "63:8624": {
+    "key": "595dbb45854dfb858356c7e3acf6b079e08a546c",
+    "name": "M3/body/small",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "12:86": {
+    "key": "029a1d6b0aa40d7e943414b6490d0112ea51ce94",
+    "name": "M3/sys/light/secondary",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:1456": {
+    "key": "c87d83079525b08db8230885f18a96309d846cad",
+    "name": "M3/label/medium",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "12:1546": {
+    "key": "69e4bc5847e0923de7788609d014f3eeab06158d",
+    "name": "M3/sys/light/surface-container",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "63:6785": {
+    "key": "68a90bb512bde3ce8a08cb1cbe5d789188e60153",
+    "name": "M3/sys/light/outline-variant",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "63:6786": {
+    "key": "da3c3232d83cbe1c7a271fd54b0d5c9ab5adac26",
+    "name": "M3/Compact/Compact (0-599dp) layout regions off",
+    "styleType": "GRID",
+    "remote": true,
+    "description": ""
+  },
+  "48:1749": {
+    "key": "e74e9ec2986a90d3cb9e32ecf07688bff22a2e48",
+    "name": "Label Color/Light/Primary",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "48:1750": {
+    "key": "f67a75bad549f318d03c234831d54a629aef4bbf",
+    "name": "Default/Bold/Body",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "48:1751": {
+    "key": "1ce8ac2d39956974d1f84a51e36b0e150d114816",
+    "name": "Default/Regular/Footnote",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "48:1753": {
+    "key": "db3e439a56a2202c87a72573b4414c51e178857d",
+    "name": "Colors/Blue",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "48:1754": {
+    "key": "316c170b0316f9cc7d39411a7d445ccd03731257",
+    "name": "Body/Emphasized",
+    "styleType": "TEXT",
+    "remote": true,
+    "description": ""
+  },
+  "48:1752": {
+    "key": "12094125003deee4f275b714d828bc04aeea79b0",
+    "name": "Separators/Non-opaque",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "48:1748": {
+    "key": "315e38a73fb364794e43b449279f1b9d5c3163e0",
+    "name": "Materials/Regular",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "16:2539": {
+    "key": "4c73b94f10745b681a689e8b503e95964aa5d75d",
+    "name": "4 Column",
+    "styleType": "GRID",
+    "remote": false,
+    "description": ""
+  },
+  "7:4": {
+    "key": "be667b0b345a51f9147d75e06d4908e85403ad40",
+    "name": "Label Color/Light/Primary",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "63:9867": {
+    "key": "c76697941585b3a991287bfaf9f0e6e48c3816dd",
+    "name": "M3/sys/light/surface-container-low",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:1578": {
+    "key": "ecdd229b25df9436556b4491330cf5d225c75dc2",
+    "name": "M3/sys/light/surface-container-highest",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:1476": {
+    "key": "5b018cb0651c95f4c68793249207c46b00acd8a2",
+    "name": "M3/sys/light/on-primary-container",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "77:21681": {
+    "key": "dea83b321fd2f0d7bee52095d1c817b3a332a74e",
+    "name": "M3/sys/light/inverse-primary",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "12:750": {
+    "key": "8a5244686cd2e11e0262f6dd1cc2a41c03c18c1e",
+    "name": "M3/sys/light/primary-container",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "77:21705": {
+    "key": "9c7455b4ca40a6870e5f9909e34475bba66da246",
+    "name": "M3/sys/light/on-tertiary-container",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "77:21703": {
+    "key": "21a505ead8c93455fce1b60c61b292781878b3b2",
+    "name": "M3/sys/light/tertiary-container",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  },
+  "846:12394": {
+    "key": "9420ca498aaf232dbb05b6861208210d9b799e2c",
+    "name": "Text 1",
+    "styleType": "FILL",
+    "remote": true,
+    "description": ""
+  }
+}

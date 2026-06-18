@@ -1,0 +1,1693 @@
+{
+  "meta": {
+    "description": "Student flow screen index for local extraction from full_design_dump.json",
+    "figma_file_key": "pHnQspQkvUJvE9TyiQN5Zv",
+    "figma_file_name": "MatchMyUni Mobile app",
+    "dump_file": "assets/studentflow/figma/full_design_dump.json",
+    "dump_last_modified": "2026-06-18T14:57:20Z",
+    "generated_at": "2026-06-18T16:25:48Z",
+    "total_flows": 10,
+    "total_screen_refs": 64,
+    "unique_node_ids": 47,
+    "nodes_in_dump": 44,
+    "nodes_missing_from_dump": [
+      "459:6500",
+      "461:6872",
+      "461:7234"
+    ]
+  },
+  "usage": {
+    "extract_one": "python3 scripts/extract_figma_screen.py --node 402:4486",
+    "extract_by_key": "python3 scripts/extract_figma_screen.py --key discover_home_1_0",
+    "extract_flow": "python3 scripts/extract_figma_screen.py --flow discover_home",
+    "list_all": "python3 scripts/extract_figma_screen.py --list"
+  },
+  "flows": [
+    {
+      "flow": "discover_home",
+      "source_file": "figma discover home screen student flow links.md",
+      "screens": [
+        {
+          "key": "discover_home_1_0",
+          "step": "1.0",
+          "label": "Home",
+          "node_id": "402:4486",
+          "node_id_url": "402_4486",
+          "export_file": "node_402_4486.json",
+          "in_dump": true,
+          "figma_name": "Home",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1098.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 10
+        },
+        {
+          "key": "discover_home_1_1",
+          "step": "1.1",
+          "label": "459:6500",
+          "node_id": "459:6500",
+          "node_id_url": "459_6500",
+          "export_file": "node_459_6500.json",
+          "in_dump": false,
+          "figma_name": null,
+          "figma_type": null,
+          "canvas": null,
+          "width": null,
+          "height": null,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 11
+        },
+        {
+          "key": "discover_home_2_1",
+          "step": "2.1",
+          "label": "461:6872",
+          "node_id": "461:6872",
+          "node_id_url": "461_6872",
+          "export_file": "node_461_6872.json",
+          "in_dump": false,
+          "figma_name": null,
+          "figma_type": null,
+          "canvas": null,
+          "width": null,
+          "height": null,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 12
+        },
+        {
+          "key": "discover_home_2_2",
+          "step": "2.2",
+          "label": "461:7234",
+          "node_id": "461:7234",
+          "node_id_url": "461_7234",
+          "export_file": "node_461_7234.json",
+          "in_dump": false,
+          "figma_name": null,
+          "figma_type": null,
+          "canvas": null,
+          "width": null,
+          "height": null,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 13
+        },
+        {
+          "key": "discover_home_2_3",
+          "step": "2.3",
+          "label": "Discover",
+          "node_id": "407:4965",
+          "node_id_url": "407_4965",
+          "export_file": "node_407_4965.json",
+          "in_dump": true,
+          "figma_name": "Discover",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 14
+        },
+        {
+          "key": "discover_home_2_4",
+          "step": "2.4",
+          "label": "Discover",
+          "node_id": "407:4965",
+          "node_id_url": "407_4965",
+          "export_file": "node_407_4965.json",
+          "in_dump": true,
+          "figma_name": "Discover",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 15
+        },
+        {
+          "key": "discover_home_2_4_1",
+          "step": "2.4.1",
+          "label": "Discover (Swipe right design)",
+          "node_id": "461:7603",
+          "node_id_url": "461_7603",
+          "export_file": "node_461_7603.json",
+          "in_dump": true,
+          "figma_name": "Discover (Swipe right design)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 16
+        },
+        {
+          "key": "discover_home_2_4_2",
+          "step": "2.4.2",
+          "label": "Discover (Swipe left design)",
+          "node_id": "461:7967",
+          "node_id_url": "461_7967",
+          "export_file": "node_461_7967.json",
+          "in_dump": true,
+          "figma_name": "Discover (Swipe left design)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 17
+        },
+        {
+          "key": "discover_home_2_5",
+          "step": "2.5",
+          "label": "Discover (Detail page)",
+          "node_id": "416:5401",
+          "node_id_url": "416_5401",
+          "export_file": "node_416_5401.json",
+          "in_dump": true,
+          "figma_name": "Discover (Detail page)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1585.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 18
+        },
+        {
+          "key": "discover_home_2_6",
+          "step": "2.6",
+          "label": "Discover / Start Application",
+          "node_id": "560:826",
+          "node_id_url": "560_826",
+          "export_file": "node_560_826.json",
+          "in_dump": true,
+          "figma_name": "Discover / Start Application",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1411.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 19
+        },
+        {
+          "key": "discover_home_2_7",
+          "step": "2.7",
+          "label": "Discover / Application (all docs Uploaded)",
+          "node_id": "560:1496",
+          "node_id_url": "560_1496",
+          "export_file": "node_560_1496.json",
+          "in_dump": true,
+          "figma_name": "Discover / Application (all docs Uploaded)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1202.0,
+          "source_file": "figma discover home screen student flow links.md",
+          "source_line": 20
+        }
+      ]
+    },
+    {
+      "flow": "discover_home_updated",
+      "source_file": "updated figma discover home screen student flow links.md",
+      "screens": [
+        {
+          "key": "discover_home_updated_1",
+          "step": "1",
+          "label": "Discover",
+          "node_id": "407:4965",
+          "node_id_url": "407_4965",
+          "export_file": "node_407_4965.json",
+          "in_dump": true,
+          "figma_name": "Discover",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "updated figma discover home screen student flow links.md",
+          "source_line": 11
+        },
+        {
+          "key": "discover_home_updated_2",
+          "step": "2",
+          "label": "Discover (Detail page)",
+          "node_id": "416:5401",
+          "node_id_url": "416_5401",
+          "export_file": "node_416_5401.json",
+          "in_dump": true,
+          "figma_name": "Discover (Detail page)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1585.0,
+          "source_file": "updated figma discover home screen student flow links.md",
+          "source_line": 14
+        },
+        {
+          "key": "discover_home_updated_3",
+          "step": "3",
+          "label": "Discover / Start Application",
+          "node_id": "560:826",
+          "node_id_url": "560_826",
+          "export_file": "node_560_826.json",
+          "in_dump": true,
+          "figma_name": "Discover / Start Application",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1411.0,
+          "source_file": "updated figma discover home screen student flow links.md",
+          "source_line": 17
+        }
+      ]
+    },
+    {
+      "flow": "login_signup",
+      "source_file": "figma login signup student flow links.md",
+      "screens": [
+        {
+          "key": "login_signup_1",
+          "step": "1",
+          "label": "Frame 121075748",
+          "node_id": "236:9028",
+          "node_id_url": "236_9028",
+          "export_file": "node_236_9028.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075748",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 794.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 10
+        },
+        {
+          "key": "login_signup_2",
+          "step": "2",
+          "label": "Choose role",
+          "node_id": "215:6438",
+          "node_id_url": "215_6438",
+          "export_file": "node_215_6438.json",
+          "in_dump": true,
+          "figma_name": "Choose role",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 11
+        },
+        {
+          "key": "login_signup_3",
+          "step": "3",
+          "label": "MatchMyUni-Mobile-app?",
+          "node_id": "299:19235",
+          "node_id_url": "299_19235",
+          "export_file": "node_299_19235.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075521",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 500.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 12
+        },
+        {
+          "key": "login_signup_4",
+          "step": "4",
+          "label": "Frame 121075729",
+          "node_id": "299:19614",
+          "node_id_url": "299_19614",
+          "export_file": "node_299_19614.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075729",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 794.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 13
+        },
+        {
+          "key": "login_signup_5",
+          "step": "5",
+          "label": "Create Password",
+          "node_id": "299:20719",
+          "node_id_url": "299_20719",
+          "export_file": "node_299_20719.json",
+          "in_dump": true,
+          "figma_name": "Create Password",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 14
+        },
+        {
+          "key": "login_signup_6",
+          "step": "6",
+          "label": "Question 1",
+          "node_id": "301:21899",
+          "node_id_url": "301_21899",
+          "export_file": "node_301_21899.json",
+          "in_dump": true,
+          "figma_name": "Question 1",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 15
+        },
+        {
+          "key": "login_signup_7",
+          "step": "7",
+          "label": "Question 2",
+          "node_id": "302:23926",
+          "node_id_url": "302_23926",
+          "export_file": "node_302_23926.json",
+          "in_dump": true,
+          "figma_name": "Question 2",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 16
+        },
+        {
+          "key": "login_signup_8",
+          "step": "8",
+          "label": "Question 3",
+          "node_id": "301:22716",
+          "node_id_url": "301_22716",
+          "export_file": "node_301_22716.json",
+          "in_dump": true,
+          "figma_name": "Question 3",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 17
+        },
+        {
+          "key": "login_signup_9",
+          "step": "9",
+          "label": "Question 4",
+          "node_id": "301:23473",
+          "node_id_url": "301_23473",
+          "export_file": "node_301_23473.json",
+          "in_dump": true,
+          "figma_name": "Question 4",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 18
+        },
+        {
+          "key": "login_signup_10",
+          "step": "10",
+          "label": "Frame 121075803",
+          "node_id": "383:9470",
+          "node_id_url": "383_9470",
+          "export_file": "node_383_9470.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075803",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 358.0,
+          "height": 163.43084716796875,
+          "source_file": "figma login signup student flow links.md",
+          "source_line": 19
+        }
+      ]
+    },
+    {
+      "flow": "login_signup_alt",
+      "source_file": "figma login signup student flow links copy.md",
+      "screens": [
+        {
+          "key": "login_signup_alt_1",
+          "step": "1",
+          "label": "Frame 121075729",
+          "node_id": "322:21756",
+          "node_id_url": "322_21756",
+          "export_file": "node_322_21756.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075729",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links copy.md",
+          "source_line": 10
+        },
+        {
+          "key": "login_signup_alt_2_1_1",
+          "step": "2.1.1",
+          "label": "Login",
+          "node_id": "322:21826",
+          "node_id_url": "322_21826",
+          "export_file": "node_322_21826.json",
+          "in_dump": true,
+          "figma_name": "Login",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links copy.md",
+          "source_line": 11
+        },
+        {
+          "key": "login_signup_alt_322_22194",
+          "step": null,
+          "label": "2.1,2>",
+          "node_id": "322:22194",
+          "node_id_url": "322_22194",
+          "export_file": "node_322_22194.json",
+          "in_dump": true,
+          "figma_name": "Forgot your password?",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links copy.md",
+          "source_line": 12
+        },
+        {
+          "key": "login_signup_alt_2_1_3",
+          "step": "2.1.3",
+          "label": "Forgot your password?",
+          "node_id": "322:22519",
+          "node_id_url": "322_22519",
+          "export_file": "node_322_22519.json",
+          "in_dump": true,
+          "figma_name": "Forgot your password?",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links copy.md",
+          "source_line": 13
+        },
+        {
+          "key": "login_signup_alt_2_1_4",
+          "step": "2.1.4",
+          "label": "Reset your password?",
+          "node_id": "322:22847",
+          "node_id_url": "322_22847",
+          "export_file": "node_322_22847.json",
+          "in_dump": true,
+          "figma_name": "Reset your password?",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma login signup student flow links copy.md",
+          "source_line": 14
+        }
+      ]
+    },
+    {
+      "flow": "forgot_password",
+      "source_file": "figma forgot password student flow links.md",
+      "screens": [
+        {
+          "key": "forgot_password_1",
+          "step": "1",
+          "label": "Frame 121075748",
+          "node_id": "236:9028",
+          "node_id_url": "236_9028",
+          "export_file": "node_236_9028.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075748",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 794.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 10
+        },
+        {
+          "key": "forgot_password_2",
+          "step": "2",
+          "label": "Choose role",
+          "node_id": "215:6438",
+          "node_id_url": "215_6438",
+          "export_file": "node_215_6438.json",
+          "in_dump": true,
+          "figma_name": "Choose role",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 11
+        },
+        {
+          "key": "forgot_password_3",
+          "step": "3",
+          "label": "MatchMyUni-Mobile-app?",
+          "node_id": "299:19235",
+          "node_id_url": "299_19235",
+          "export_file": "node_299_19235.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075521",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 500.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 12
+        },
+        {
+          "key": "forgot_password_4",
+          "step": "4",
+          "label": "Frame 121075729",
+          "node_id": "299:19614",
+          "node_id_url": "299_19614",
+          "export_file": "node_299_19614.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075729",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 794.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 13
+        },
+        {
+          "key": "forgot_password_5",
+          "step": "5",
+          "label": "Create Password",
+          "node_id": "299:20719",
+          "node_id_url": "299_20719",
+          "export_file": "node_299_20719.json",
+          "in_dump": true,
+          "figma_name": "Create Password",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 14
+        },
+        {
+          "key": "forgot_password_6",
+          "step": "6",
+          "label": "Question 1",
+          "node_id": "301:21899",
+          "node_id_url": "301_21899",
+          "export_file": "node_301_21899.json",
+          "in_dump": true,
+          "figma_name": "Question 1",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 15
+        },
+        {
+          "key": "forgot_password_7",
+          "step": "7",
+          "label": "Question 2",
+          "node_id": "302:23926",
+          "node_id_url": "302_23926",
+          "export_file": "node_302_23926.json",
+          "in_dump": true,
+          "figma_name": "Question 2",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 16
+        },
+        {
+          "key": "forgot_password_8",
+          "step": "8",
+          "label": "Question 3",
+          "node_id": "301:22716",
+          "node_id_url": "301_22716",
+          "export_file": "node_301_22716.json",
+          "in_dump": true,
+          "figma_name": "Question 3",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 17
+        },
+        {
+          "key": "forgot_password_9",
+          "step": "9",
+          "label": "Question 4",
+          "node_id": "301:23473",
+          "node_id_url": "301_23473",
+          "export_file": "node_301_23473.json",
+          "in_dump": true,
+          "figma_name": "Question 4",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 18
+        },
+        {
+          "key": "forgot_password_10",
+          "step": "10",
+          "label": "Frame 121075803",
+          "node_id": "383:9470",
+          "node_id_url": "383_9470",
+          "export_file": "node_383_9470.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075803",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 358.0,
+          "height": 163.43084716796875,
+          "source_file": "figma forgot password student flow links.md",
+          "source_line": 19
+        }
+      ]
+    },
+    {
+      "flow": "phone_auth",
+      "source_file": "figma phone number auth student flow links.md",
+      "screens": [
+        {
+          "key": "phone_auth_1_1",
+          "step": "1.1",
+          "label": "Phone Number",
+          "node_id": "303:25033",
+          "node_id_url": "303_25033",
+          "export_file": "node_303_25033.json",
+          "in_dump": true,
+          "figma_name": "Phone Number",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma phone number auth student flow links.md",
+          "source_line": 10
+        },
+        {
+          "key": "phone_auth_1_2",
+          "step": "1.2",
+          "label": "Frame 121075729",
+          "node_id": "334:7246",
+          "node_id_url": "334_7246",
+          "export_file": "node_334_7246.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075729",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 794.0,
+          "source_file": "figma phone number auth student flow links.md",
+          "source_line": 11
+        },
+        {
+          "key": "phone_auth_1_2",
+          "step": "1.2",
+          "label": "Phone Number",
+          "node_id": "321:19321",
+          "node_id_url": "321_19321",
+          "export_file": "node_321_19321.json",
+          "in_dump": true,
+          "figma_name": "Phone Number",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma phone number auth student flow links.md",
+          "source_line": 12
+        },
+        {
+          "key": "phone_auth_2_2",
+          "step": "2.2",
+          "label": "Create Password",
+          "node_id": "334:7593",
+          "node_id_url": "334_7593",
+          "export_file": "node_334_7593.json",
+          "in_dump": true,
+          "figma_name": "Create Password",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma phone number auth student flow links.md",
+          "source_line": 13
+        },
+        {
+          "key": "phone_auth_1_3",
+          "step": "1.3",
+          "label": "ApplePay-summarySheet",
+          "node_id": "303:25860",
+          "node_id_url": "303_25860",
+          "export_file": "node_303_25860.json",
+          "in_dump": true,
+          "figma_name": "ApplePay-summarySheet",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 790.0,
+          "source_file": "figma phone number auth student flow links.md",
+          "source_line": 14
+        },
+        {
+          "key": "phone_auth_2_3",
+          "step": "2.3",
+          "label": "Frame 121075729",
+          "node_id": "321:19322",
+          "node_id_url": "321_19322",
+          "export_file": "node_321_19322.json",
+          "in_dump": true,
+          "figma_name": "Frame 121075729",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 794.0,
+          "source_file": "figma phone number auth student flow links.md",
+          "source_line": 15
+        }
+      ]
+    },
+    {
+      "flow": "tutorial_signup",
+      "source_file": "figma tutorial signup student flow links.md",
+      "screens": [
+        {
+          "key": "tutorial_signup_1",
+          "step": "1",
+          "label": "Discover",
+          "node_id": "645:3705",
+          "node_id_url": "645_3705",
+          "export_file": "node_645_3705.json",
+          "in_dump": true,
+          "figma_name": "Discover",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma tutorial signup student flow links.md",
+          "source_line": 17
+        },
+        {
+          "key": "tutorial_signup_2",
+          "step": "2",
+          "label": "Discover",
+          "node_id": "645:4064",
+          "node_id_url": "645_4064",
+          "export_file": "node_645_4064.json",
+          "in_dump": true,
+          "figma_name": "Discover",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma tutorial signup student flow links.md",
+          "source_line": 19
+        },
+        {
+          "key": "tutorial_signup_3",
+          "step": "3",
+          "label": "Discover",
+          "node_id": "645:4423",
+          "node_id_url": "645_4423",
+          "export_file": "node_645_4423.json",
+          "in_dump": true,
+          "figma_name": "Discover",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma tutorial signup student flow links.md",
+          "source_line": 21
+        },
+        {
+          "key": "tutorial_signup_4",
+          "step": "4",
+          "label": "Discover",
+          "node_id": "645:3349",
+          "node_id_url": "645_3349",
+          "export_file": "node_645_3349.json",
+          "in_dump": true,
+          "figma_name": "Discover",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma tutorial signup student flow links.md",
+          "source_line": 23
+        }
+      ]
+    },
+    {
+      "flow": "profile",
+      "source_file": "figma profile student flow links.md",
+      "screens": [
+        {
+          "key": "profile_1",
+          "step": "1",
+          "label": "Profile",
+          "node_id": "620:894",
+          "node_id_url": "620_894",
+          "export_file": "node_620_894.json",
+          "in_dump": true,
+          "figma_name": "Profile",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1868.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 17
+        },
+        {
+          "key": "profile_2",
+          "step": "2",
+          "label": "Profile/edit profile",
+          "node_id": "645:4938",
+          "node_id_url": "645_4938",
+          "export_file": "node_645_4938.json",
+          "in_dump": true,
+          "figma_name": "Profile/edit profile",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 957.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 20
+        },
+        {
+          "key": "profile_3",
+          "step": "3",
+          "label": "Profile / Academic Info",
+          "node_id": "680:10634",
+          "node_id_url": "680_10634",
+          "export_file": "node_680_10634.json",
+          "in_dump": true,
+          "figma_name": "Profile / Academic Info",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 957.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 23
+        },
+        {
+          "key": "profile_4",
+          "step": "4",
+          "label": "Profile / Study preferences",
+          "node_id": "680:11309",
+          "node_id_url": "680_11309",
+          "export_file": "node_680_11309.json",
+          "in_dump": true,
+          "figma_name": "Profile / Study preferences",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 957.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 26
+        },
+        {
+          "key": "profile_5",
+          "step": "5",
+          "label": "Profile / Notification",
+          "node_id": "644:2248",
+          "node_id_url": "644_2248",
+          "export_file": "node_644_2248.json",
+          "in_dump": true,
+          "figma_name": "Profile / Notification",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1197.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 29
+        },
+        {
+          "key": "profile_6",
+          "step": "6",
+          "label": "Profile / About",
+          "node_id": "683:11934",
+          "node_id_url": "683_11934",
+          "export_file": "node_683_11934.json",
+          "in_dump": true,
+          "figma_name": "Profile / About",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 957.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 32
+        },
+        {
+          "key": "profile_7",
+          "step": "7",
+          "label": "Profile / Account & security",
+          "node_id": "683:12385",
+          "node_id_url": "683_12385",
+          "export_file": "node_683_12385.json",
+          "in_dump": true,
+          "figma_name": "Profile / Account & security",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 957.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 35
+        },
+        {
+          "key": "profile_8",
+          "step": "8",
+          "label": "Profile / Help & Support",
+          "node_id": "683:12692",
+          "node_id_url": "683_12692",
+          "export_file": "node_683_12692.json",
+          "in_dump": true,
+          "figma_name": "Profile / Help & Support",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 957.0,
+          "source_file": "figma profile student flow links.md",
+          "source_line": 38
+        }
+      ]
+    },
+    {
+      "flow": "application_bottomtab",
+      "source_file": "figma Application bottomtab screen student flow links.md",
+      "screens": [
+        {
+          "key": "application_bottomtab_1_1",
+          "step": "1.1",
+          "label": "Application (Shortlisted)",
+          "node_id": "593:1755",
+          "node_id_url": "593_1755",
+          "export_file": "node_593_1755.json",
+          "in_dump": true,
+          "figma_name": "Application (Shortlisted)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1090.0,
+          "source_file": "figma Application bottomtab screen student flow links.md",
+          "source_line": 10
+        },
+        {
+          "key": "application_bottomtab_1_2",
+          "step": "1.2",
+          "label": "Application (Applied)",
+          "node_id": "593:2244",
+          "node_id_url": "593_2244",
+          "export_file": "node_593_2244.json",
+          "in_dump": true,
+          "figma_name": "Application (Applied)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 877.0,
+          "source_file": "figma Application bottomtab screen student flow links.md",
+          "source_line": 13
+        },
+        {
+          "key": "application_bottomtab_2",
+          "step": "2",
+          "label": "Application (all Uploaded)",
+          "node_id": "593:846",
+          "node_id_url": "593_846",
+          "export_file": "node_593_846.json",
+          "in_dump": true,
+          "figma_name": "Application (all Uploaded)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1744.0,
+          "source_file": "figma Application bottomtab screen student flow links.md",
+          "source_line": 16
+        }
+      ]
+    },
+    {
+      "flow": "start_application",
+      "source_file": "figma start application student flow links.md",
+      "screens": [
+        {
+          "key": "start_application_1",
+          "step": "1",
+          "label": "Discover (Detail page)",
+          "node_id": "416:5401",
+          "node_id_url": "416_5401",
+          "export_file": "node_416_5401.json",
+          "in_dump": true,
+          "figma_name": "Discover (Detail page)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1585.0,
+          "source_file": "figma start application student flow links.md",
+          "source_line": 17
+        },
+        {
+          "key": "start_application_2",
+          "step": "2",
+          "label": "Discover / Start Application",
+          "node_id": "560:826",
+          "node_id_url": "560_826",
+          "export_file": "node_560_826.json",
+          "in_dump": true,
+          "figma_name": "Discover / Start Application",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1411.0,
+          "source_file": "figma start application student flow links.md",
+          "source_line": 21
+        },
+        {
+          "key": "start_application_2_1",
+          "step": "2.1",
+          "label": "Discover / Application (all docs Uploaded)",
+          "node_id": "560:1496",
+          "node_id_url": "560_1496",
+          "export_file": "node_560_1496.json",
+          "in_dump": true,
+          "figma_name": "Discover / Application (all docs Uploaded)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 1202.0,
+          "source_file": "figma start application student flow links.md",
+          "source_line": 25
+        },
+        {
+          "key": "start_application_3_1",
+          "step": "3.1",
+          "label": "if Application Start Screen is free >",
+          "node_id": "567:1943",
+          "node_id_url": "567_1943",
+          "export_file": "node_567_1943.json",
+          "in_dump": true,
+          "figma_name": "Discover / Application (Submitted)",
+          "figma_type": "FRAME",
+          "canvas": "Maine Design (IOS) (only Designer)",
+          "width": 390.0,
+          "height": 844.0,
+          "source_file": "figma start application student flow links.md",
+          "source_line": 31
+        }
+      ]
+    }
+  ],
+  "by_node_id": {
+    "215:6438": {
+      "node_id_url": "215_6438",
+      "export_file": "node_215_6438.json",
+      "figma_name": "Choose role",
+      "label": "Choose role",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "236:9028": {
+      "node_id_url": "236_9028",
+      "export_file": "node_236_9028.json",
+      "figma_name": "Frame 121075748",
+      "label": "Frame 121075748",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 794.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "299:19235": {
+      "node_id_url": "299_19235",
+      "export_file": "node_299_19235.json",
+      "figma_name": "Frame 121075521",
+      "label": "MatchMyUni-Mobile-app?",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 500.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "299:19614": {
+      "node_id_url": "299_19614",
+      "export_file": "node_299_19614.json",
+      "figma_name": "Frame 121075729",
+      "label": "Frame 121075729",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 794.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "299:20719": {
+      "node_id_url": "299_20719",
+      "export_file": "node_299_20719.json",
+      "figma_name": "Create Password",
+      "label": "Create Password",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "301:21899": {
+      "node_id_url": "301_21899",
+      "export_file": "node_301_21899.json",
+      "figma_name": "Question 1",
+      "label": "Question 1",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "301:22716": {
+      "node_id_url": "301_22716",
+      "export_file": "node_301_22716.json",
+      "figma_name": "Question 3",
+      "label": "Question 3",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "301:23473": {
+      "node_id_url": "301_23473",
+      "export_file": "node_301_23473.json",
+      "figma_name": "Question 4",
+      "label": "Question 4",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "302:23926": {
+      "node_id_url": "302_23926",
+      "export_file": "node_302_23926.json",
+      "figma_name": "Question 2",
+      "label": "Question 2",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "303:25033": {
+      "node_id_url": "303_25033",
+      "export_file": "node_303_25033.json",
+      "figma_name": "Phone Number",
+      "label": "Phone Number",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "phone_auth"
+      ]
+    },
+    "303:25860": {
+      "node_id_url": "303_25860",
+      "export_file": "node_303_25860.json",
+      "figma_name": "ApplePay-summarySheet",
+      "label": "ApplePay-summarySheet",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 790.0,
+      "flows": [
+        "phone_auth"
+      ]
+    },
+    "321:19321": {
+      "node_id_url": "321_19321",
+      "export_file": "node_321_19321.json",
+      "figma_name": "Phone Number",
+      "label": "Phone Number",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "phone_auth"
+      ]
+    },
+    "321:19322": {
+      "node_id_url": "321_19322",
+      "export_file": "node_321_19322.json",
+      "figma_name": "Frame 121075729",
+      "label": "Frame 121075729",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 794.0,
+      "flows": [
+        "phone_auth"
+      ]
+    },
+    "322:21756": {
+      "node_id_url": "322_21756",
+      "export_file": "node_322_21756.json",
+      "figma_name": "Frame 121075729",
+      "label": "Frame 121075729",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup_alt"
+      ]
+    },
+    "322:21826": {
+      "node_id_url": "322_21826",
+      "export_file": "node_322_21826.json",
+      "figma_name": "Login",
+      "label": "Login",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup_alt"
+      ]
+    },
+    "322:22194": {
+      "node_id_url": "322_22194",
+      "export_file": "node_322_22194.json",
+      "figma_name": "Forgot your password?",
+      "label": "2.1,2>",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup_alt"
+      ]
+    },
+    "322:22519": {
+      "node_id_url": "322_22519",
+      "export_file": "node_322_22519.json",
+      "figma_name": "Forgot your password?",
+      "label": "Forgot your password?",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup_alt"
+      ]
+    },
+    "322:22847": {
+      "node_id_url": "322_22847",
+      "export_file": "node_322_22847.json",
+      "figma_name": "Reset your password?",
+      "label": "Reset your password?",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "login_signup_alt"
+      ]
+    },
+    "334:7246": {
+      "node_id_url": "334_7246",
+      "export_file": "node_334_7246.json",
+      "figma_name": "Frame 121075729",
+      "label": "Frame 121075729",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 794.0,
+      "flows": [
+        "phone_auth"
+      ]
+    },
+    "334:7593": {
+      "node_id_url": "334_7593",
+      "export_file": "node_334_7593.json",
+      "figma_name": "Create Password",
+      "label": "Create Password",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "phone_auth"
+      ]
+    },
+    "383:9470": {
+      "node_id_url": "383_9470",
+      "export_file": "node_383_9470.json",
+      "figma_name": "Frame 121075803",
+      "label": "Frame 121075803",
+      "in_dump": true,
+      "width": 358.0,
+      "height": 163.43084716796875,
+      "flows": [
+        "login_signup",
+        "forgot_password"
+      ]
+    },
+    "402:4486": {
+      "node_id_url": "402_4486",
+      "export_file": "node_402_4486.json",
+      "figma_name": "Home",
+      "label": "Home",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1098.0,
+      "flows": [
+        "discover_home"
+      ]
+    },
+    "407:4965": {
+      "node_id_url": "407_4965",
+      "export_file": "node_407_4965.json",
+      "figma_name": "Discover",
+      "label": "Discover",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "discover_home",
+        "discover_home_updated"
+      ]
+    },
+    "416:5401": {
+      "node_id_url": "416_5401",
+      "export_file": "node_416_5401.json",
+      "figma_name": "Discover (Detail page)",
+      "label": "Discover (Detail page)",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1585.0,
+      "flows": [
+        "discover_home",
+        "discover_home_updated",
+        "start_application"
+      ]
+    },
+    "459:6500": {
+      "node_id_url": "459_6500",
+      "export_file": "node_459_6500.json",
+      "figma_name": null,
+      "label": "459:6500",
+      "in_dump": false,
+      "width": null,
+      "height": null,
+      "flows": [
+        "discover_home"
+      ]
+    },
+    "461:6872": {
+      "node_id_url": "461_6872",
+      "export_file": "node_461_6872.json",
+      "figma_name": null,
+      "label": "461:6872",
+      "in_dump": false,
+      "width": null,
+      "height": null,
+      "flows": [
+        "discover_home"
+      ]
+    },
+    "461:7234": {
+      "node_id_url": "461_7234",
+      "export_file": "node_461_7234.json",
+      "figma_name": null,
+      "label": "461:7234",
+      "in_dump": false,
+      "width": null,
+      "height": null,
+      "flows": [
+        "discover_home"
+      ]
+    },
+    "461:7603": {
+      "node_id_url": "461_7603",
+      "export_file": "node_461_7603.json",
+      "figma_name": "Discover (Swipe right design)",
+      "label": "Discover (Swipe right design)",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "discover_home"
+      ]
+    },
+    "461:7967": {
+      "node_id_url": "461_7967",
+      "export_file": "node_461_7967.json",
+      "figma_name": "Discover (Swipe left design)",
+      "label": "Discover (Swipe left design)",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "discover_home"
+      ]
+    },
+    "560:1496": {
+      "node_id_url": "560_1496",
+      "export_file": "node_560_1496.json",
+      "figma_name": "Discover / Application (all docs Uploaded)",
+      "label": "Discover / Application (all docs Uploaded)",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1202.0,
+      "flows": [
+        "discover_home",
+        "start_application"
+      ]
+    },
+    "560:826": {
+      "node_id_url": "560_826",
+      "export_file": "node_560_826.json",
+      "figma_name": "Discover / Start Application",
+      "label": "Discover / Start Application",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1411.0,
+      "flows": [
+        "discover_home",
+        "discover_home_updated",
+        "start_application"
+      ]
+    },
+    "567:1943": {
+      "node_id_url": "567_1943",
+      "export_file": "node_567_1943.json",
+      "figma_name": "Discover / Application (Submitted)",
+      "label": "if Application Start Screen is free >",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "start_application"
+      ]
+    },
+    "593:1755": {
+      "node_id_url": "593_1755",
+      "export_file": "node_593_1755.json",
+      "figma_name": "Application (Shortlisted)",
+      "label": "Application (Shortlisted)",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1090.0,
+      "flows": [
+        "application_bottomtab"
+      ]
+    },
+    "593:2244": {
+      "node_id_url": "593_2244",
+      "export_file": "node_593_2244.json",
+      "figma_name": "Application (Applied)",
+      "label": "Application (Applied)",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 877.0,
+      "flows": [
+        "application_bottomtab"
+      ]
+    },
+    "593:846": {
+      "node_id_url": "593_846",
+      "export_file": "node_593_846.json",
+      "figma_name": "Application (all Uploaded)",
+      "label": "Application (all Uploaded)",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1744.0,
+      "flows": [
+        "application_bottomtab"
+      ]
+    },
+    "620:894": {
+      "node_id_url": "620_894",
+      "export_file": "node_620_894.json",
+      "figma_name": "Profile",
+      "label": "Profile",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1868.0,
+      "flows": [
+        "profile"
+      ]
+    },
+    "644:2248": {
+      "node_id_url": "644_2248",
+      "export_file": "node_644_2248.json",
+      "figma_name": "Profile / Notification",
+      "label": "Profile / Notification",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 1197.0,
+      "flows": [
+        "profile"
+      ]
+    },
+    "645:3349": {
+      "node_id_url": "645_3349",
+      "export_file": "node_645_3349.json",
+      "figma_name": "Discover",
+      "label": "Discover",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "tutorial_signup"
+      ]
+    },
+    "645:3705": {
+      "node_id_url": "645_3705",
+      "export_file": "node_645_3705.json",
+      "figma_name": "Discover",
+      "label": "Discover",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "tutorial_signup"
+      ]
+    },
+    "645:4064": {
+      "node_id_url": "645_4064",
+      "export_file": "node_645_4064.json",
+      "figma_name": "Discover",
+      "label": "Discover",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "tutorial_signup"
+      ]
+    },
+    "645:4423": {
+      "node_id_url": "645_4423",
+      "export_file": "node_645_4423.json",
+      "figma_name": "Discover",
+      "label": "Discover",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 844.0,
+      "flows": [
+        "tutorial_signup"
+      ]
+    },
+    "645:4938": {
+      "node_id_url": "645_4938",
+      "export_file": "node_645_4938.json",
+      "figma_name": "Profile/edit profile",
+      "label": "Profile/edit profile",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 957.0,
+      "flows": [
+        "profile"
+      ]
+    },
+    "680:10634": {
+      "node_id_url": "680_10634",
+      "export_file": "node_680_10634.json",
+      "figma_name": "Profile / Academic Info",
+      "label": "Profile / Academic Info",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 957.0,
+      "flows": [
+        "profile"
+      ]
+    },
+    "680:11309": {
+      "node_id_url": "680_11309",
+      "export_file": "node_680_11309.json",
+      "figma_name": "Profile / Study preferences",
+      "label": "Profile / Study preferences",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 957.0,
+      "flows": [
+        "profile"
+      ]
+    },
+    "683:11934": {
+      "node_id_url": "683_11934",
+      "export_file": "node_683_11934.json",
+      "figma_name": "Profile / About",
+      "label": "Profile / About",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 957.0,
+      "flows": [
+        "profile"
+      ]
+    },
+    "683:12385": {
+      "node_id_url": "683_12385",
+      "export_file": "node_683_12385.json",
+      "figma_name": "Profile / Account & security",
+      "label": "Profile / Account & security",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 957.0,
+      "flows": [
+        "profile"
+      ]
+    },
+    "683:12692": {
+      "node_id_url": "683_12692",
+      "export_file": "node_683_12692.json",
+      "figma_name": "Profile / Help & Support",
+      "label": "Profile / Help & Support",
+      "in_dump": true,
+      "width": 390.0,
+      "height": 957.0,
+      "flows": [
+        "profile"
+      ]
+    }
+  }
+}
