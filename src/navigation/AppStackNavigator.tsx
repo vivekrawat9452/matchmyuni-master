@@ -50,12 +50,18 @@ export type AppStackList = {
     universityName?: string;
     applicationFee: number;
     currencySymbol?: string;
+    matchPct?: number;
+    courseData?: string;
   };
-  /** Success screen after free application or payment placeholder */
+  /** Success screen after free application or payment placeholder — Figma 567:1943 */
   ApplicationSubmitted: {
     applicationId?: string;
+    courseId?: number;
     courseName: string;
     universityName?: string;
+    matchPct?: number;
+    courseData?: string;
+    intakeLabel?: string;
   };
   /** Track status — Figma 593:846, from Applied tab */
   TrackApplicationStatus: {

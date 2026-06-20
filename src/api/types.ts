@@ -90,6 +90,11 @@ export interface StudentProfileUpdatePayload {
   countryCode?: string;
   contact?: string;
   referralCodeUsed?: string;
+  highestQualification?: string;
+  institutionName?: string;
+  institutionCity?: string;
+  institutionCountry?: string;
+  gradesObtained?: string;
 }
 
 export interface UserDetailsDto {
@@ -319,6 +324,8 @@ export interface ApplicationSummaryDto {
   id: string;
   status: string;
   receiptUrl?: string | null;
+  /** Present on GET /applications/by-ids; restore list footer when added to GET /applications */
+  submittedAt?: string | null;
 }
 
 export interface ApplicationFeeDto {

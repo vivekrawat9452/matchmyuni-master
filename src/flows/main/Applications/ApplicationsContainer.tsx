@@ -6,6 +6,7 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import {Alert} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {
@@ -22,11 +23,15 @@ import {flattenApplicationItems} from '../../../api/applicationsUtils';
 import {getApiErrorMessage} from '../../../api/client';
 import {useAuthStore} from '../../../stores/authStore';
 import type {AppStackList} from '../../../navigation/AppStackNavigator';
+import type {TabList} from '../../../navigation/MainAppNavigator';
 import type {ApplicationListItemDto, CourseListItem} from '../../../api/types';
 import {en} from '../../../utils/strings/en';
 
 export function ApplicationsContainer() {
-  const navigation = useNavigation<NativeStackNavigationProp<AppStackList>>();
+  const navigation = useNavigation<
+    NativeStackNavigationProp<AppStackList> &
+      BottomTabNavigationProp<TabList, 'ApplicationTab'>
+  >();
   const queryClient = useQueryClient();
   const isAuth = !!useAuthStore(s => s.user);
   const [tab, setTab] = useState<ApplicationsTab>('shortlist');
@@ -135,6 +140,10 @@ export function ApplicationsContainer() {
     [removeItem],
   );
 
+  const onAddApplication = useCallback(() => {
+    navigation.navigate('DiscoverTab');
+  }, [navigation]);
+
   return (
     <ApplicationsScreen
       tab={tab}
@@ -147,6 +156,7 @@ export function ApplicationsContainer() {
       onStartApplication={onStartApplication}
       onOpenCourse={onOpenCourse}
       onTrackApplication={onTrackApplication}
+      onAddApplication={onAddApplication}
       onRemoveShortlist={onRemoveShortlist}
       shortlistBusyId={shortlistBusyId}
     />

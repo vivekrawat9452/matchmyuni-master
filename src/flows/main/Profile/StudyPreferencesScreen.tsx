@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {X} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {PrimaryButton} from '../../../components/PrimaryButton';
 import {colors} from '../../../utils/colors';
@@ -47,13 +48,19 @@ function Chip({
         large && styles.chipLarge,
         selected && styles.chipSelected,
       ]}>
-      <Text style={[styles.chipLabel, large && styles.chipLabelLarge, selected && styles.chipLabelSelected]}>
+      <Text
+        style={[
+          styles.chipLabel,
+          large && styles.chipLabelLarge,
+          selected && styles.chipLabelSelected,
+        ]}>
         {label}
       </Text>
     </Pressable>
   );
 }
 
+/** Figma node 680:11309 — Study preferences modal */
 export function StudyPreferencesScreen({
   destinations,
   budget,
@@ -71,8 +78,15 @@ export function StudyPreferencesScreen({
     <View style={styles.overlay}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={[styles.sheet, {paddingBottom: insets.bottom + 16}]}>
-        <View style={styles.handle} />
-        <Text style={styles.title}>Study preferences</Text>
+        <View style={styles.sheetHeader}>
+          <View style={styles.handle} />
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Study preferences</Text>
+            <Pressable onPress={onClose} hitSlop={12} accessibilityLabel="Close">
+              <X size={22} color={colors.navy} strokeWidth={2.5} />
+            </Pressable>
+          </View>
+        </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -140,8 +154,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: SCREEN_H_PADDING,
-    paddingTop: 12,
+    paddingTop: 8,
   },
+  sheetHeader: {marginBottom: 8},
   handle: {
     width: 40,
     height: 4,
@@ -150,12 +165,16 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 12,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: colors.navy,
     lineHeight: 26,
-    marginBottom: 16,
   },
   scroll: {paddingBottom: 12},
   sectionTitle: {
@@ -203,5 +222,5 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   chipLabelSelected: {color: colors.primary},
-  applyBtn: {marginTop: 8},
+  applyBtn: {marginTop: 8, minHeight: 48, borderRadius: 1000},
 });

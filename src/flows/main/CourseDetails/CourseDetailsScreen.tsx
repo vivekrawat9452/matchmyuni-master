@@ -6,7 +6,7 @@
  *  ─ Hero: full-width logo/photo, match+prime badges
  *  ─ Body:
  *     • Course name + university row + scholarship chip
- *     • Estimated yearly cost card (GET /courses/:id fees)
+ *     • Estimated yearly cost card + Cost breakdown modal (GET /courses/:id fees)
  *     • Stat pill row: scholarship / duration (GET /courses/:id)
  *     • "Why you match" bullets (GET /recommendations/discover whyMatch when passed)
  *     • "Course Overview" + meta table
@@ -15,11 +15,10 @@
  *  ─ Sticky footer: [Shortlist]  [Start Application →]
  *
  * Commented out (no API in prompts/API_Docs.md):
- *   - Cost Breakdown expander
  *   - Visa rate stat
  *   - Why Prime card
  */
-import React, {memo} from 'react';
+import React, {memo, useState} from 'react';
 import {
   View,
   Text,
@@ -38,9 +37,12 @@ import {
   ChevronLeftIcon,
   StarIcon,
   CheckCircleIcon,
+  FilledCheckCircleIcon,
   ArrowUpCircleIcon,
 } from '../../../components/icons/ApplicationIcons';
 import {ChevronDown} from 'lucide-react-native';
+import {CourseCostBreakdownModal} from './CourseCostBreakdownModal';
+import type {CourseCostBreakdown} from './courseCostBreakdown';
 
 const H_PAD = hPad(5);
 
@@ -48,6 +50,7 @@ export type CourseDetailsScreenProps = {
   course: CourseListItem | null | undefined;
   matchPct: number;
   whyMatch?: string[];
+  costBreakdown?: CourseCostBreakdown | null;
   loading: boolean;
   isShortlisted?: boolean;
   onBack: () => void;
@@ -142,12 +145,22 @@ const tr = StyleSheet.create({
   },
 });
 
+/** "Why you match" section header — Figma node 416:5401 */
+function WhyMatchSectionHeader() {
+  return (
+    <View style={wm.headerWrap}>
+      <Text style={wm.title}>Why you match</Text>
+      <View style={wm.divider} />
+    </View>
+  );
+}
+
 /** "Why you match" bullet from GET /recommendations/discover */
 function WhyMatchBullet({text}: {text: string}) {
   return (
-    <View style={mb.row}>
-      <CheckCircleIcon size={22} color={colors.tagGreen} />
-      <Text style={mb.text}>{text}</Text>
+    <View style={wm.row}>
+      <FilledCheckCircleIcon size={20} fill={colors.accentTeal} />
+      <Text style={wm.text}>{text}</Text>
     </View>
   );
 }
@@ -184,12 +197,36 @@ const mb = StyleSheet.create({
   highlight: {color: colors.primary, fontWeight: Weights.bold},
 });
 
+const wm = StyleSheet.create({
+  headerWrap: {marginBottom: 12},
+  title: {
+    fontSize: FontSizes.small,
+    fontWeight: Weights.bold,
+    color: colors.navy,
+    marginBottom: 12,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginBottom: 12,
+  },
+  row: {flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10},
+  text: {
+    flex: 1,
+    fontSize: FontSizes.caption,
+    fontWeight: Weights.medium,
+    color: colors.textSecondary,
+    lineHeight: 15,
+  },
+});
+
 // ─── Main Screen ───────────────────────────────────────────────────────────────
 
 export const CourseDetailsScreen = memo(function CourseDetailsScreen({
   course,
   matchPct,
   whyMatch = [],
+  costBreakdown = null,
   loading,
   isShortlisted = false,
   onBack,
@@ -197,6 +234,7 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
   onStartApplication,
 }: CourseDetailsScreenProps) {
   const insets = useSafeAreaInsets();
+  const [costModalVisible, setCostModalVisible] = useState(false);
 
   if (loading) {
     return (
@@ -295,28 +333,35 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
             </View>
           ) : null}
 
-          {/* Estimated yearly cost card — GET /courses/:id applicableTuitionFee */}
-          {fee ? (
+          {/* Estimated yearly cost card — GET /courses/:id applicableTuitionFee + fee breakdown */}
+          {fee || costBreakdown ? (
             <View style={s.costCard}>
-              <Text style={s.costLabel}>Estimated yearly cost</Text>
-              <View style={s.costPriceRow}>
-                <Text style={s.costMain}>{fee}</Text>
-                <Text style={s.costPer}>/ year</Text>
-              </View>
-              {listedFee ? (
-                <Text style={s.costListed}>Listed at {listedFee}</Text>
+              {fee ? (
+                <>
+                  <Text style={s.costLabel}>Estimated yearly cost</Text>
+                  <View style={s.costPriceRow}>
+                    <Text style={s.costMain}>{fee}</Text>
+                    <Text style={s.costPer}>/ year</Text>
+                  </View>
+                  {listedFee ? (
+                    <Text style={s.costListed}>Listed at {listedFee}</Text>
+                  ) : null}
+                  {promoText ? (
+                    <View style={s.costPromo}>
+                      <Text style={s.costPromoText}>{promoText}</Text>
+                    </View>
+                  ) : null}
+                </>
               ) : null}
-              {promoText ? (
-                <View style={s.costPromo}>
-                  <Text style={s.costPromoText}>{promoText}</Text>
-                </View>
+              {costBreakdown ? (
+                <Pressable
+                  style={[s.costBreakdownRow, !fee && {marginTop: 0, paddingTop: 0, borderTopWidth: 0}]}
+                  onPress={() => setCostModalVisible(true)}
+                  hitSlop={8}>
+                  <Text style={s.costBreakdownLabel}>Cost breakdown</Text>
+                  <ChevronDown size={18} color={colors.textSecondary} />
+                </Pressable>
               ) : null}
-              {/* Cost Breakdown — no dedicated endpoint in prompts/API_Docs.md; uncomment when API ships
-              <Pressable style={s.costBreakdownRow} hitSlop={8}>
-                <Text style={s.costBreakdownLabel}>Cost breakdown</Text>
-                <ChevronDown size={18} color={colors.textSecondary} />
-              </Pressable>
-              */}
             </View>
           ) : null}
 
@@ -351,7 +396,7 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
           {/* Why you match — active when whyMatch passed from GET /recommendations/discover */}
           {whyMatch.length > 0 ? (
             <View style={s.section}>
-              <SectionTitle>Why you match</SectionTitle>
+              <WhyMatchSectionHeader />
               {whyMatch.map((line, index) => (
                 <WhyMatchBullet key={`${index}-${line}`} text={line} />
               ))}
@@ -438,9 +483,6 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
                   {course.scholarshipDetails?.description ??
                     `Global scholarship award — up to ${schStat ?? `${pct}%`} tuition reduction for international students.`}
                 </Text>
-                <Pressable hitSlop={8}>
-                  <Text style={s.scholarshipLink}>Check eligibility →</Text>
-                </Pressable>
               </View>
             </View>
           ) : null}
@@ -474,6 +516,12 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
 
         </View>
       </ScrollView>
+
+      <CourseCostBreakdownModal
+        visible={costModalVisible}
+        breakdown={costBreakdown}
+        onClose={() => setCostModalVisible(false)}
+      />
 
       {/* ── Sticky footer ──────────────────────────────────────────── */}
       <View style={[s.footer, {paddingBottom: insets.bottom + 12}]}>
@@ -629,7 +677,6 @@ const s = StyleSheet.create({
     paddingVertical: 8,
   },
   costPromoText: {fontSize: FontSizes.caption, fontWeight: Weights.semibold, color: colors.tagGreen},
-  // Cost Breakdown — uncomment when API ships
   costBreakdownRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -724,7 +771,6 @@ const s = StyleSheet.create({
   scholarshipTitleRow: {flexDirection: 'row', alignItems: 'center', gap: 6},
   scholarshipTitle: {fontSize: FontSizes.small, fontWeight: Weights.extrabold, color: colors.navy},
   scholarshipText: {fontSize: FontSizes.chip, color: colors.navy, lineHeight: 19},
-  scholarshipLink: {fontSize: FontSizes.chip, fontWeight: Weights.bold, color: colors.primary},
 
   // ── Footer ────────────────────────────────────────────────────────
   footer: {

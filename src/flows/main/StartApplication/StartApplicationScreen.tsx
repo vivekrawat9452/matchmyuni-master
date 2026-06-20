@@ -4,12 +4,11 @@
  * Data sources:
  *  - Course card + cost: GET /courses/:id
  *  - Application Breakdown: GET /applications/by-ids applicationFees, or course fee projection
- *  - Application fee card: GET /courses/:id applicationFee (commented when 0/absent)
+ *  - Application fee card: GET /courses/:id depositFee + currencySymbol
  *  - Documents: GET /user/documents
  *
  * Commented for later (no API field):
  *  - Visa rate badge
- *  - Cost breakdown expander (course otherFees available but no dedicated breakdown endpoint)
  */
 import React, {memo, useState} from 'react';
 import {
@@ -20,8 +19,10 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
-import {Check, ChevronDown, ChevronUp} from 'lucide-react-native';
+import {Check, ChevronDown} from 'lucide-react-native';
 import {WaveHeader} from '../../../components/WaveHeader';
+import {CourseCostBreakdownModal} from '../CourseDetails/CourseCostBreakdownModal';
+import type {CourseCostBreakdown} from '../CourseDetails/courseCostBreakdown';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {colors} from '../../../utils/colors';
 import {FontSizes, Weights, Styles} from '../../../utils';
@@ -56,8 +57,8 @@ export type StartApplicationScreenProps = {
   matchPct: number;
   requiredDocs: RequiredDoc[];
   uploadingKey?: string | null;
-  applicationFee?: number | null;
   applicationBreakdown?: FeeBreakdownRow[];
+  costBreakdown?: CourseCostBreakdown | null;
   deadlineDate?: string | null;
   deadlineRelative?: string | null;
   intakes?: UpcomingIntake[];
@@ -247,11 +248,14 @@ const badgeStyles = StyleSheet.create({
 function CourseInfoCard({
   course,
   matchPct,
+  costBreakdown,
+  onCostBreakdownPress,
 }: {
   course: CourseListItem;
   matchPct: number;
+  costBreakdown?: CourseCostBreakdown | null;
+  onCostBreakdownPress?: () => void;
 }) {
-  const [costExpanded, setCostExpanded] = useState(false);
 
   const sym = course.currencySymbol ?? '$';
   const pct = scholarshipPercent(course);
@@ -267,44 +271,6 @@ function CourseInfoCard({
 
   const intakeLabel =
     course.upcomingIntakes?.[0]?.label ?? course.intakes?.[0] ?? null;
-
-  const costLineItems: {label: string; amount: string}[] = [];
-  if (course.registrationFee != null && course.registrationFee > 0) {
-    costLineItems.push({
-      label: 'Registration fee',
-      amount: `${sym}${course.registrationFee.toLocaleString()}`,
-    });
-  }
-  if (course.depositFee != null && course.depositFee > 0) {
-    costLineItems.push({
-      label: 'Deposit fee',
-      amount: `${sym}${course.depositFee.toLocaleString()}`,
-    });
-  }
-  if (course.examinationFee != null && course.examinationFee > 0) {
-    costLineItems.push({
-      label: 'Examination fee',
-      amount: `${sym}${course.examinationFee.toLocaleString()}`,
-    });
-  }
-  if (course.hostelFee != null && course.hostelFee > 0) {
-    costLineItems.push({
-      label: 'Hostel fee',
-      amount: `${sym}${course.hostelFee.toLocaleString()}`,
-    });
-  }
-  if (course.foodFee != null && course.foodFee > 0) {
-    costLineItems.push({
-      label: 'Food fee',
-      amount: `${sym}${course.foodFee.toLocaleString()}`,
-    });
-  }
-  for (const other of course.otherFees ?? []) {
-    costLineItems.push({
-      label: other.name,
-      amount: `${sym}${other.amount.toLocaleString()}`,
-    });
-  }
 
   return (
     <View style={infoCard.wrap}>
@@ -349,54 +315,37 @@ function CourseInfoCard({
         </View>
       ) : null}
 
-      {fee ? (
+      {fee || costBreakdown ? (
         <View style={infoCard.costSection}>
-          <Text style={infoCard.costLabel}>Estimated yearly cost</Text>
-          <View style={infoCard.costPriceRow}>
-            <Text style={infoCard.costMain}>{fee}</Text>
-            <Text style={infoCard.costPer}>/ year</Text>
-          </View>
-          {listedFee ? (
-            <Text style={infoCard.costListed}>Listed at {listedFee}</Text>
-          ) : null}
-          {promoText ? (
-            <View style={infoCard.costPromo}>
-              <Text style={infoCard.costPromoText}>{promoText}</Text>
-            </View>
-          ) : null}
-
-          {/* Cost breakdown — no dedicated endpoint; expand using GET /courses/:id fee fields when present */}
-          {costLineItems.length > 0 ? (
+          {fee ? (
             <>
-              <Pressable
-                style={infoCard.costBreakdownRow}
-                onPress={() => setCostExpanded(v => !v)}
-                hitSlop={8}>
-                <Text style={infoCard.costBreakdownLabel}>Cost breakdown</Text>
-                {costExpanded ? (
-                  <ChevronUp size={18} color={colors.textSecondary} />
-                ) : (
-                  <ChevronDown size={18} color={colors.textSecondary} />
-                )}
-              </Pressable>
-              {costExpanded
-                ? costLineItems.map(row => (
-                    <View key={row.label} style={infoCard.costLineRow}>
-                      <Text style={infoCard.costLineLabel}>{row.label}</Text>
-                      <Text style={infoCard.costLineValue}>{row.amount}</Text>
-                    </View>
-                  ))
-                : null}
+              <Text style={infoCard.costLabel}>Estimated yearly cost</Text>
+              <View style={infoCard.costPriceRow}>
+                <Text style={infoCard.costMain}>{fee}</Text>
+                <Text style={infoCard.costPer}>/ year</Text>
+              </View>
+              {listedFee ? (
+                <Text style={infoCard.costListed}>Listed at {listedFee}</Text>
+              ) : null}
+              {promoText ? (
+                <View style={infoCard.costPromo}>
+                  <Text style={infoCard.costPromoText}>{promoText}</Text>
+                </View>
+              ) : null}
             </>
-          ) : (
-            /* Cost breakdown — uncomment when dedicated Cost Breakdown API ships
-            <Pressable style={infoCard.costBreakdownRow} hitSlop={8}>
+          ) : null}
+          {costBreakdown ? (
+            <Pressable
+              style={[
+                infoCard.costBreakdownRow,
+                !fee && {marginTop: 0, paddingTop: 0, borderTopWidth: 0},
+              ]}
+              onPress={onCostBreakdownPress}
+              hitSlop={8}>
               <Text style={infoCard.costBreakdownLabel}>Cost breakdown</Text>
               <ChevronDown size={18} color={colors.textSecondary} />
             </Pressable>
-            */
-            null
-          )}
+          ) : null}
         </View>
       ) : null}
     </View>
@@ -495,20 +444,6 @@ const infoCard = StyleSheet.create({
   costBreakdownLabel: {
     fontSize: FontSizes.chip,
     fontWeight: Weights.semibold,
-    color: colors.navy,
-  },
-  costLineRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  costLineLabel: {
-    fontSize: FontSizes.caption,
-    color: colors.textSecondary,
-  },
-  costLineValue: {
-    fontSize: FontSizes.caption,
-    fontWeight: Weights.bold,
     color: colors.navy,
   },
 });
@@ -707,18 +642,57 @@ function ApplicationFeeCard({
   currencySymbol?: string;
 }) {
   const sym = currencySymbol ?? '$';
+  const formattedFee = `${sym} ${fee.toLocaleString()}`;
 
   return (
-    <View style={styles.feeCard}>
-      <Text style={styles.feeTitle}>🏦  Application fee</Text>
-      <Text style={styles.feeText}>
-        {sym}
-        {fee} application fee applies. Paid directly to the university.
-      </Text>
-      <Text style={styles.feeNote}>Proceeds not collected by MatchMyUni</Text>
+    <View style={feeCardStyles.wrap}>
+      <View style={feeCardStyles.accent} />
+      <View style={feeCardStyles.body}>
+        <Text style={feeCardStyles.title}>🏦  Application fee</Text>
+        <Text style={feeCardStyles.text}>
+          {formattedFee} application fee applies. Paid directly to the university.
+        </Text>
+        <Text style={feeCardStyles.note}>Proceeds not collected by MatchMyUni</Text>
+      </View>
     </View>
   );
 }
+
+const feeCardStyles = StyleSheet.create({
+  wrap: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF7F5',
+    borderRadius: rad.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  accent: {
+    width: 4,
+    backgroundColor: colors.primary,
+  },
+  body: {
+    flex: 1,
+    padding: 14,
+    gap: 6,
+  },
+  title: {
+    fontSize: FontSizes.chip,
+    fontWeight: Weights.bold,
+    color: colors.navy,
+  },
+  text: {
+    fontSize: FontSizes.caption,
+    color: colors.navy,
+    lineHeight: 17,
+  },
+  note: {
+    fontSize: FontSizes.size11,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+});
 
 export const StartApplicationScreen = memo(function StartApplicationScreen({
   course,
@@ -727,8 +701,8 @@ export const StartApplicationScreen = memo(function StartApplicationScreen({
   matchPct,
   requiredDocs,
   uploadingKey,
-  applicationFee,
   applicationBreakdown = [],
+  costBreakdown = null,
   deadlineDate,
   deadlineRelative,
   intakes = [],
@@ -742,6 +716,7 @@ export const StartApplicationScreen = memo(function StartApplicationScreen({
   onSubmit,
 }: StartApplicationScreenProps) {
   const insets = useSafeAreaInsets();
+  const [costModalVisible, setCostModalVisible] = useState(false);
   const allReady = requiredDocs.every(d => d.uploaded);
 
   if (!course) {
@@ -766,8 +741,8 @@ export const StartApplicationScreen = memo(function StartApplicationScreen({
   }
 
   const headerSubtitle = `${course.name} • ${course.universityName}`;
-  const showApplicationFee =
-    applicationFee != null && applicationFee > 0;
+  const depositFee = course.depositFee;
+  const showFeeCard = depositFee != null && depositFee > 0;
 
   return (
     <View style={styles.flex}>
@@ -785,7 +760,12 @@ export const StartApplicationScreen = memo(function StartApplicationScreen({
         }}
         showsVerticalScrollIndicator={false}>
 
-        <CourseInfoCard course={course} matchPct={matchPct} />
+        <CourseInfoCard
+          course={course}
+          matchPct={matchPct}
+          costBreakdown={costBreakdown}
+          onCostBreakdownPress={() => setCostModalVisible(true)}
+        />
 
         <IntakePicker
           intakes={intakes}
@@ -817,17 +797,12 @@ export const StartApplicationScreen = memo(function StartApplicationScreen({
           </View>
         </View>
 
-        {showApplicationFee ? (
+        {showFeeCard ? (
           <ApplicationFeeCard
-            fee={applicationFee}
+            fee={depositFee}
             currencySymbol={course.currencySymbol}
           />
-        ) : (
-          /* Application fee — GET /courses/:id applicationFee is 0 or absent; uncomment when fee applies
-          <ApplicationFeeCard fee={25} currencySymbol={course.currencySymbol ?? '€'} />
-          */
-          null
-        )}
+        ) : null}
 
         {deadlineDate ? (
           <View style={[styles.section, styles.deadlineCard]}>
@@ -846,6 +821,12 @@ export const StartApplicationScreen = memo(function StartApplicationScreen({
           </View>
         ) : null}
       </ScrollView>
+
+      <CourseCostBreakdownModal
+        visible={costModalVisible}
+        breakdown={costBreakdown}
+        onClose={() => setCostModalVisible(false)}
+      />
 
       <View style={[styles.footer, {paddingBottom: insets.bottom + 12}]}>
         <Pressable
@@ -907,15 +888,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
 
-  feeCard: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: rad.lg,
-    padding: 14,
-    marginBottom: 20,
-    gap: 6,
-  },
   deadlineCard: {
     backgroundColor: colors.matchBadgeBg,
     borderWidth: 1,
@@ -933,16 +905,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   deadlineText: {
-    fontSize: FontSizes.caption,
-    color: colors.navy,
-    lineHeight: 17,
-  },
-  feeTitle: {
-    fontSize: FontSizes.chip,
-    fontWeight: Weights.bold,
-    color: colors.navy,
-  },
-  feeText: {
     fontSize: FontSizes.caption,
     color: colors.navy,
     lineHeight: 17,

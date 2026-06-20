@@ -6,11 +6,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import {ChevronRight, Pencil} from 'lucide-react-native';
+import {ChevronRight, MessageCircle, Pencil, Upload} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {WaveHeader} from '../../../components/WaveHeader';
+import {PrimaryButton} from '../../../components/PrimaryButton';
 import {colors} from '../../../utils/colors';
 import {profileStyles as ps} from './profileStyles';
-import type {UserDocumentDto} from '../../../api/types';
 
 export type ProfileScreenProps = {
   fullName: string;
@@ -40,6 +41,7 @@ export type ProfileScreenProps = {
     initials: string;
   } | null;
   onEditProfile: () => void;
+  onEditAcademic: () => void;
   onStudyPreferences: () => void;
   onUploadDocument: (key: string) => void;
   onNotifications: () => void;
@@ -49,25 +51,45 @@ export type ProfileScreenProps = {
   onLogout: () => void;
 };
 
-function Section({
-  title,
-  children,
+function SectionEditButton({
+  label,
   onPress,
 }: {
-  title: string;
-  children: React.ReactNode;
-  onPress?: () => void;
+  label: string;
+  onPress: () => void;
 }) {
-  const body = (
-    <View style={ps.section}>
-      <Text style={ps.sectionTitle}>{title}</Text>
-      {children}
+  return (
+    <Pressable
+      style={({pressed}) => [
+        ps.sectionEditBtn,
+        pressed && ps.sectionEditBtnPressed,
+      ]}
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={label}>
+      <Pencil size={16} color={colors.white} strokeWidth={2.5} />
+    </Pressable>
+  );
+}
+
+function SectionHeader({
+  title,
+  onEdit,
+  editLabel,
+}: {
+  title: string;
+  onEdit?: () => void;
+  editLabel?: string;
+}) {
+  return (
+    <View style={ps.sectionHeaderRow}>
+      <Text style={ps.sectionTitleStandalone}>{title}</Text>
+      {onEdit ? (
+        <SectionEditButton label={editLabel ?? `Edit ${title}`} onPress={onEdit} />
+      ) : null}
     </View>
   );
-  if (onPress) {
-    return <Pressable onPress={onPress}>{body}</Pressable>;
-  }
-  return body;
 }
 
 function InfoRow({label, value}: {label: string; value: string}) {
@@ -90,6 +112,16 @@ function SettingsRow({label, onPress}: {label: string; onPress: () => void}) {
   );
 }
 
+function DocumentUploadIcon() {
+  return (
+    <View style={styles.docIconWrap}>
+      <View style={styles.docIconCircle}>
+        <Upload size={12} color={colors.white} strokeWidth={2.5} />
+      </View>
+    </View>
+  );
+}
+
 export function ProfileScreen({
   fullName,
   email,
@@ -102,6 +134,7 @@ export function ProfileScreen({
   documents,
   counselor,
   onEditProfile,
+  onEditAcademic,
   onStudyPreferences,
   onUploadDocument,
   onNotifications,
@@ -113,155 +146,161 @@ export function ProfileScreen({
   const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView
-      style={ps.screen}
-      contentContainerStyle={[
-        ps.scroll,
-        {paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24},
-      ]}
-      showsVerticalScrollIndicator={false}>
-      <Text style={ps.pageTitle}>My Profile</Text>
+    <View style={ps.screen}>
+      <WaveHeader title="My Profile" />
 
-      {/* Avatar card */}
-      <View style={styles.avatarCard}>
-        <View style={styles.avatarRing}>
-          <Text style={styles.avatarInitial}>{avatarInitial}</Text>
-        </View>
-        <View style={styles.avatarMeta}>
-          <Text style={styles.name}>{fullName}</Text>
-          <Text style={styles.email}>{email}</Text>
-        </View>
-        <Text style={styles.country}>{countryLabel}</Text>
-      </View>
-
-      <Pressable style={ps.editBtn} onPress={onEditProfile}>
-        <Text style={ps.editBtnLabel}>Edit profile</Text>
-      </Pressable>
-
-      <View style={styles.progressWrap}>
-        <View style={ps.progressTrack}>
-          <View style={[ps.progressFill, {width: `${completionPct}%`}]} />
-        </View>
-        <Text style={ps.progressHint}>{completionHint}</Text>
-      </View>
-
-      <Section title="Academic Info">
-        <InfoRow label="Highest qualification" value={academic.qualification} />
-        <InfoRow label="Subjects" value={academic.subjects} />
-        {academic.grades ? (
-          <InfoRow label="Grades / GPA" value={academic.grades} />
-        ) : null}
-        <InfoRow label="Graduation year" value={academic.graduationYear} />
-      </Section>
-
-      <Section title="My Documents">
-        {documents.map(doc => (
-          <View key={doc.key} style={styles.docRow}>
-            <View style={styles.docLeft}>
-              <Text style={styles.docTitle}>{doc.label}</Text>
-              <Text
-                style={[
-                  styles.docStatus,
-                  doc.uploaded ? styles.docUploaded : styles.docPending,
-                ]}>
-                {doc.status}
-              </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          ps.scroll,
+          styles.scrollContent,
+          {paddingBottom: insets.bottom + 24},
+        ]}
+        showsVerticalScrollIndicator={false}>
+        {/* Profile card — Figma node 620:894 Frame 121075722 */}
+        <View style={ps.profileCard}>
+          <View style={styles.profileRow}>
+            <View style={styles.avatarRing}>
+              <Text style={styles.avatarInitial}>{avatarInitial}</Text>
             </View>
-            <Pressable onPress={() => onUploadDocument(doc.key)} hitSlop={8}>
-              <Text style={styles.uploadLink}>Upload →</Text>
-            </Pressable>
+            <View style={styles.profileMeta}>
+              <Text style={styles.name}>{fullName}</Text>
+              <Text style={styles.email}>{email}</Text>
+              <Text style={styles.country}>{countryLabel}</Text>
+            </View>
           </View>
-        ))}
-      </Section>
 
-      <View style={styles.studyPrefsBlock}>
-        <View style={styles.studyPrefsHeader}>
-          <Text style={ps.sectionTitleStandalone}>Study preferences</Text>
-          <Pressable
-            style={({pressed}) => [
-              styles.studyPrefsEditBtn,
-              pressed && styles.studyPrefsEditBtnPressed,
-            ]}
-            onPress={onStudyPreferences}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Edit study preferences">
-            <Pencil size={16} color={colors.primary} strokeWidth={2.5} />
-          </Pressable>
+          <PrimaryButton
+            label="Edit profile"
+            onPress={onEditProfile}
+            style={styles.editProfileBtn}
+          />
         </View>
+
+        <View style={styles.progressWrap}>
+          <View style={ps.progressTrack}>
+            <View style={[ps.progressFill, {width: `${completionPct}%`}]} />
+          </View>
+          <Text style={ps.progressHint}>{completionHint}</Text>
+        </View>
+
+        {/* Academic Info — Figma: title + edit icon opens Edit profile (680:10634) */}
+        <SectionHeader
+          title="Academic Info"
+          onEdit={onEditAcademic}
+          editLabel="Edit academic info"
+        />
+        <View style={ps.section}>
+          <InfoRow label="Highest qualification" value={academic.qualification} />
+          <InfoRow label="Subjects" value={academic.subjects} />
+          {/* Grades / GPA shown on expanded academic screen; hidden on main profile per Figma 620:894 */}
+          {/* {academic.grades ? (
+            <InfoRow label="Grades / GPA" value={academic.grades} />
+          ) : null} */}
+          <InfoRow label="Graduation year" value={academic.graduationYear} />
+        </View>
+
+        <SectionHeader title="My Documents" />
+        <View style={ps.section}>
+          {documents.map(doc => (
+            <View key={doc.key} style={styles.docRow}>
+              <DocumentUploadIcon />
+              <View style={styles.docBody}>
+                <Text style={styles.docTitle}>{doc.label}</Text>
+                <Text
+                  style={[
+                    styles.docStatus,
+                    doc.uploaded ? styles.docUploaded : styles.docPending,
+                  ]}>
+                  {doc.status}
+                </Text>
+              </View>
+              <Pressable onPress={() => onUploadDocument(doc.key)} hitSlop={8}>
+                <Text style={styles.uploadLink}>Upload →</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+
+        <SectionHeader
+          title="Study preferences"
+          onEdit={onStudyPreferences}
+          editLabel="Edit study preferences"
+        />
         <View style={ps.section}>
           <InfoRow label="Preferred countries" value={studyPrefs.countries} />
           <InfoRow label="Field of study" value={studyPrefs.field} />
           <InfoRow label="Budget range" value={studyPrefs.budget} />
         </View>
-      </View>
 
-      {counselor ? (
-        <Section title="Your counselor">
-          <View style={styles.counselorRow}>
-            <View style={styles.counselorAvatar}>
-              <Text style={styles.counselorInitials}>{counselor.initials}</Text>
-            </View>
-            <View style={styles.counselorMeta}>
-              <Text style={styles.counselorName}>{counselor.name}</Text>
-              <Text style={styles.counselorRole}>{counselor.role}</Text>
-              <Text style={styles.counselorLoc}>{counselor.location}</Text>
-              <View style={styles.counselorStats}>
-                <Text style={styles.counselorStat}>{counselor.rating}</Text>
-                <Text style={styles.counselorStatDot}> · </Text>
-                <Text style={styles.counselorStat}>{counselor.placed}</Text>
+        {/* Counselor — placeholder until dedicated counselor API is available */}
+        {counselor ? (
+          <>
+            <SectionHeader title="Your counselor" />
+            <View style={ps.section}>
+              <View style={styles.counselorRow}>
+                <View style={styles.counselorAvatar}>
+                  <Text style={styles.counselorInitials}>{counselor.initials}</Text>
+                </View>
+                <View style={styles.counselorMeta}>
+                  <Text style={styles.counselorName}>{counselor.name}</Text>
+                  <Text style={styles.counselorRole}>{counselor.role}</Text>
+                  <Text style={styles.counselorLoc}>{counselor.location}</Text>
+                  <View style={styles.counselorStats}>
+                    <Text style={styles.counselorStat}>{counselor.rating}</Text>
+                    <Text style={styles.counselorStatDot}> · </Text>
+                    <Text style={styles.counselorStat}>{counselor.placed}</Text>
+                  </View>
+                </View>
               </View>
+              <View style={styles.counselorActions}>
+                {/* onWhatsApp — wire when counselor contact API is available */}
+                <Pressable style={styles.counselorBtnWhatsApp}>
+                  <MessageCircle size={16} color={colors.white} />
+                  <Text style={styles.counselorBtnWhatsAppLabel}>WhatsApp</Text>
+                </Pressable>
+                {/* onMessageInApp — wire when in-app messaging API is available */}
+                <Pressable style={styles.counselorBtnPrimary}>
+                  <Text style={styles.counselorBtnPrimaryLabel}>Message in app</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.counselorHint}>
+                {counselor.name.split(' ')[0]} is your dedicated counsellor. Reach out anytime.
+              </Text>
             </View>
-          </View>
-          <View style={styles.counselorActions}>
-            <Pressable style={styles.counselorBtn}>
-              <Text style={styles.counselorBtnLabel}>WhatApp</Text>
-            </Pressable>
-            <Pressable style={[styles.counselorBtn, styles.counselorBtnPrimary]}>
-              <Text style={styles.counselorBtnLabelPrimary}>Message in app</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.counselorHint}>
-            {counselor.name.split(' ')[0]} is your dedicated counsellor. Reach out anytime.
-          </Text>
-        </Section>
-      ) : null}
+          </>
+        ) : null}
 
-      <Section title="Settings">
-        <SettingsRow label="Notifications" onPress={onNotifications} />
-        <SettingsRow label="About us" onPress={onAbout} />
-        <SettingsRow label="Account & security" onPress={onAccount} />
-        <SettingsRow label="Help & support" onPress={onHelp} />
-      </Section>
+        <SectionHeader title="Settings" />
+        <View style={ps.section}>
+          <SettingsRow label="Notifications" onPress={onNotifications} />
+          <SettingsRow label="About us" onPress={onAbout} />
+          <SettingsRow label="Account & security" onPress={onAccount} />
+          <SettingsRow label="Help & support" onPress={onHelp} />
+        </View>
 
-      <Pressable style={ps.logout} onPress={onLogout}>
-        <Text style={ps.logoutLabel}>-→ Log Out</Text>
-      </Pressable>
-    </ScrollView>
+        <Pressable style={ps.logout} onPress={onLogout}>
+          <Text style={ps.logoutLabel}>-→ Log Out</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  avatarCard: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
+  scroll: {flex: 1},
+  scrollContent: {marginTop: -12},
+  profileRow: {flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14},
   avatarRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
   },
-  avatarInitial: {fontSize: 28, fontWeight: '800', color: colors.white},
-  avatarMeta: {alignItems: 'center', marginBottom: 4},
+  avatarInitial: {fontSize: 24, fontWeight: '800', color: colors.white},
+  profileMeta: {flex: 1},
   name: {
     fontSize: 16,
     fontWeight: '700',
@@ -271,7 +310,7 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.textMuted,
     lineHeight: 16,
     marginTop: 2,
   },
@@ -280,33 +319,35 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     lineHeight: 16,
+    marginTop: 2,
   },
+  editProfileBtn: {minHeight: 34, borderRadius: 30},
   progressWrap: {marginBottom: 14},
-  studyPrefsBlock: {marginBottom: 14},
-  studyPrefsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  studyPrefsEditBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFF0EB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  studyPrefsEditBtnPressed: {opacity: 0.85},
   docRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  docLeft: {flex: 1},
+  docIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  docIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  docBody: {flex: 1},
   docTitle: {
     fontSize: 14,
     fontWeight: '700',
@@ -324,14 +365,14 @@ const styles = StyleSheet.create({
   },
   counselorRow: {flexDirection: 'row', gap: 12, marginBottom: 12},
   counselorAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  counselorInitials: {fontSize: 20, fontWeight: '800', color: colors.white},
+  counselorInitials: {fontSize: 24, fontWeight: '800', color: colors.white},
   counselorMeta: {flex: 1},
   counselorName: {
     fontSize: 16,
@@ -342,14 +383,14 @@ const styles = StyleSheet.create({
   counselorRole: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.textMuted,
     lineHeight: 16,
     marginTop: 1,
   },
   counselorLoc: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textSecondary,
+    color: colors.navy,
     lineHeight: 14,
     marginTop: 2,
   },
@@ -362,26 +403,30 @@ const styles = StyleSheet.create({
   },
   counselorStatDot: {fontSize: 11, color: colors.textSecondary},
   counselorActions: {flexDirection: 'row', gap: 10, marginBottom: 10},
-  counselorBtn: {
+  counselorBtnWhatsApp: {
     flex: 1,
-    height: 40,
+    height: 36,
     borderRadius: 1000,
-    borderWidth: 1,
-    borderColor: colors.border,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
+    gap: 6,
+    backgroundColor: colors.accentTeal,
   },
-  counselorBtnPrimary: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  counselorBtnLabel: {
+  counselorBtnWhatsAppLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.navy,
+    color: colors.white,
   },
-  counselorBtnLabelPrimary: {
+  counselorBtnPrimary: {
+    flex: 1,
+    height: 36,
+    borderRadius: 1000,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  counselorBtnPrimaryLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.white,

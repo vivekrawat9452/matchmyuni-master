@@ -1,7 +1,16 @@
 /**
  * Applications tab — Figma nodes 593:1755 (Shortlist) + 593:2244 (Applied)
+ *
+ * Shortlist data: GET /api/user/shortlist
+ * Applied data: GET /applications
+ *
+ * Commented for later (no API field on list response):
+ *  - Match % badge on cards
+ *  - Course duration / intake on Applied cards
+ *  - Prime badge on Applied cards
+ *  - Submitted date footer on Applied cards
  */
-import React, {memo, useCallback} from 'react';
+import React, {memo, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -13,15 +22,23 @@ import {
   RefreshControl,
   ListRenderItem,
 } from 'react-native';
+import {Check} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {WaveHeader} from '../../../components/WaveHeader';
+import {StarIcon} from '../../../components/icons/ApplicationIcons';
 import type {ApplicationListItemDto, CourseListItem} from '../../../api/types';
 import {colors} from '../../../utils/colors';
 import {FontSizes, Weights, Styles} from '../../../utils';
 import {hPad, rad} from '../../../utils/sizes';
 import {en} from '../../../utils/strings/en';
-import {feeStatusLabel, statusBadgeColors, statusLabel} from './applicationStatus';
+import {
+  APPLIED_PIPELINE_STEPS,
+  appliedStatusShortLabel,
+  getAppliedPipelineState,
+} from './applicationStatus';
 
 const H_PAD = hPad(5);
+export const MAX_STUDENT_APPLICATIONS = 5;
 
 export type ApplicationsTab = 'shortlist' | 'applied';
 
@@ -36,11 +53,12 @@ export type ApplicationsScreenProps = {
   onStartApplication: (course: CourseListItem) => void;
   onOpenCourse: (course: CourseListItem) => void;
   onTrackApplication: (item: ApplicationListItemDto) => void;
+  onAddApplication?: () => void;
   onRemoveShortlist?: (courseId: number) => void;
   shortlistBusyId?: number | null;
 };
 
-function SegmentTabs({
+function UnderlineTabs({
   tab,
   onTabChange,
 }: {
@@ -48,46 +66,86 @@ function SegmentTabs({
   onTabChange: (t: ApplicationsTab) => void;
 }) {
   return (
-    <View style={seg.wrap}>
+    <View style={tabs.wrap}>
       <Pressable
-        style={[seg.pill, tab === 'shortlist' && seg.pillActive]}
-        onPress={() => onTabChange('shortlist')}>
-        <Text style={[seg.label, tab === 'shortlist' && seg.labelActive]}>
+        style={tabs.tab}
+        onPress={() => onTabChange('shortlist')}
+        accessibilityRole="tab"
+        accessibilityState={{selected: tab === 'shortlist'}}>
+        <Text style={[tabs.label, tab === 'shortlist' && tabs.labelActive]}>
           {en.applicationsTab.shortlist}
         </Text>
+        {tab === 'shortlist' ? <View style={tabs.indicator} /> : <View style={tabs.indicatorSpacer} />}
       </Pressable>
       <Pressable
-        style={[seg.pill, tab === 'applied' && seg.pillActive]}
-        onPress={() => onTabChange('applied')}>
-        <Text style={[seg.label, tab === 'applied' && seg.labelActive]}>
+        style={tabs.tab}
+        onPress={() => onTabChange('applied')}
+        accessibilityRole="tab"
+        accessibilityState={{selected: tab === 'applied'}}>
+        <Text style={[tabs.label, tab === 'applied' && tabs.labelActive]}>
           {en.applicationsTab.applied}
         </Text>
+        {tab === 'applied' ? <View style={tabs.indicator} /> : <View style={tabs.indicatorSpacer} />}
       </Pressable>
     </View>
   );
 }
 
-function UniLogo({uri, name}: {uri?: string; name: string}) {
-  if (uri) {
-    return <Image source={{uri}} style={card.logo} resizeMode="contain" />;
-  }
+
+const AppliedPipelineStepper = memo(function AppliedPipelineStepper({
+  status,
+}: {
+  status: string;
+}) {
+  const {completedThrough, activeIndex} = getAppliedPipelineState(status);
+
   return (
-    <View style={[card.logo, card.logoPlaceholder]}>
-      <Text style={card.logoLetter}>{name.charAt(0).toUpperCase()}</Text>
+    <View style={pipeline.wrap}>
+      <View style={pipeline.track}>
+        {APPLIED_PIPELINE_STEPS.map((label, i) => {
+          const done = i <= completedThrough;
+          const active = activeIndex != null && i === activeIndex;
+          const last = i === APPLIED_PIPELINE_STEPS.length - 1;
+          return (
+            <View key={label} style={pipeline.step}>
+              <View style={pipeline.dotRow}>
+                <View
+                  style={[
+                    pipeline.dot,
+                    done && pipeline.dotDone,
+                    active && pipeline.dotActive,
+                  ]}>
+                  {done ? (
+                    <Check size={10} color={colors.white} strokeWidth={3} />
+                  ) : active ? (
+                    <View style={pipeline.dotActiveInner} />
+                  ) : null}
+                </View>
+                {!last ? (
+                  <View
+                    style={[
+                      pipeline.line,
+                      i < completedThrough + 1 && pipeline.lineDone,
+                    ]}
+                  />
+                ) : null}
+              </View>
+              <Text
+                style={[
+                  pipeline.label,
+                  done && pipeline.labelDone,
+                  active && pipeline.labelActive,
+                ]}
+                numberOfLines={1}>
+                {label}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
-}
-
-function formatFee(course: CourseListItem): string | null {
-  const sym = course.currencySymbol ?? '$';
-  if (course.applicationFee != null && course.applicationFee > 0) {
-    return `${sym}${course.applicationFee} app fee`;
-  }
-  if (course.applicableTuitionFee != null) {
-    return `${sym}${course.applicableTuitionFee.toLocaleString()}/yr`;
-  }
-  return null;
-}
+});
 
 const ShortlistCard = memo(function ShortlistCard({
   course,
@@ -102,50 +160,59 @@ const ShortlistCard = memo(function ShortlistCard({
   onRemove?: () => void;
   removing?: boolean;
 }) {
-  const location = [course.city, course.country].filter(Boolean).join(', ');
-  const fee = formatFee(course);
-  const intake = course.upcomingIntakes?.[0]?.label ?? course.intakes?.[0];
+  const intake =
+    course.upcomingIntakes?.[0]?.label ?? course.intakes?.[0] ?? null;
 
   return (
     <Pressable style={card.wrap} onPress={onPress}>
-      <View style={card.row}>
-        <UniLogo uri={course.universityLogo} name={course.universityName} />
-        <View style={card.body}>
-          <Text style={card.courseName} numberOfLines={2}>
-            {course.name}
-          </Text>
-          <Text style={card.uniName} numberOfLines={1}>
-            {course.universityName}
-          </Text>
-          <View style={card.metaRow}>
-            {location ? <Text style={card.meta}>{location}</Text> : null}
-            {course.duration ? (
-              <Text style={card.meta}>
-                {location ? ' · ' : ''}
-                {course.duration} yr
-              </Text>
-            ) : null}
+      <View style={card.top}>
+        <Text style={card.courseName} numberOfLines={2}>
+          {course.name}
+        </Text>
+        {/* Match % — no field in GET /api/user/shortlist; restore when API adds matchScore
+        {matchPct != null ? (
+          <View style={card.matchBadge}>
+            <Text style={card.matchText}>{matchPct}% Match</Text>
           </View>
-          {fee ? <Text style={card.fee}>{fee}</Text> : null}
-          {intake ? <Text style={card.intake}>Next intake: {intake}</Text> : null}
-        </View>
-      </View>
-      <View style={card.actions}>
-        {onRemove ? (
-          <Pressable
-            style={card.removeBtn}
-            onPress={onRemove}
-            disabled={removing}
-            hitSlop={8}>
-            {removing ? (
-              <ActivityIndicator size="small" color={colors.textSecondary} />
-            ) : (
-              <Text style={card.removeLabel}>{en.applicationsTab.remove}</Text>
-            )}
-          </Pressable>
         ) : null}
-        <Pressable style={card.cta} onPress={onStart}>
-          <Text style={card.ctaLabel}>{en.applicationsTab.startApplication}</Text>
+        */}
+      </View>
+
+      <View style={card.uniRow}>
+        {course.universityLogo ? (
+          <Image
+            source={{uri: course.universityLogo}}
+            style={card.uniLogo}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={card.uniDot} />
+        )}
+        <Text style={card.uniName} numberOfLines={1}>
+          {course.universityName?.toUpperCase()}
+        </Text>
+      </View>
+
+      <View style={card.statsRow}>
+        {course.duration ? (
+          <Text style={card.stat}>
+            {course.duration} year{course.duration > 1 ? 's' : ''}
+          </Text>
+        ) : null}
+        {intake ? <Text style={card.stat}>• {intake}</Text> : null}
+      </View>
+
+      {course.isPrime ? (
+        <View style={card.primeBadge}>
+          <StarIcon size={10} color={colors.navy} />
+          <Text style={card.primeText}>Prime</Text>
+        </View>
+      ) : null}
+
+      <View style={card.footer}>
+        <Text style={card.statusLabel}>{en.applicationsTab.shortlistedStatus}</Text>
+        <Pressable onPress={onStart} hitSlop={8}>
+          <Text style={card.footerCta}>{en.applicationsTab.startApplication}</Text>
         </Pressable>
       </View>
     </Pressable>
@@ -154,21 +221,103 @@ const ShortlistCard = memo(function ShortlistCard({
 
 const AppliedCard = memo(function AppliedCard({
   item,
-  onPress,
   onTrack,
 }: {
   item: ApplicationListItemDto;
-  onPress: () => void;
   onTrack: () => void;
 }) {
-  const {course, application, university, appFeeStatus} = item;
-  const sc = statusBadgeColors(application.status);
-  const fee = formatFee(course);
+  const {course, application, university} = item;
+  // const submittedAt = application.submittedAt;
 
   return (
-    <Pressable style={card.wrap} onPress={onPress}>
-      <View style={card.row}>
-        <UniLogo uri={university.logoUrl ?? course.universityLogo} name={university.name} />
+    <View style={card.wrap}>
+      <View style={card.top}>
+        <Text style={card.courseName} numberOfLines={2}>
+          {course.name}
+        </Text>
+        {/* Match % — no field in GET /applications; restore when API adds matchScore
+        {matchPct != null ? (
+          <View style={card.matchBadge}>
+            <Text style={card.matchText}>{matchPct}% Match</Text>
+          </View>
+        ) : null}
+        */}
+      </View>
+
+      <View style={card.uniRow}>
+        {university.logoUrl ?? course.universityLogo ? (
+          <Image
+            source={{uri: university.logoUrl ?? course.universityLogo}}
+            style={card.uniLogo}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={card.uniDot} />
+        )}
+        <Text style={card.uniName} numberOfLines={1}>
+          {(university.name ?? course.universityName)?.toUpperCase()}
+        </Text>
+      </View>
+
+      {/* Duration / intake — not on GET /applications course payload; restore when API adds fields
+      <View style={card.statsRow}>
+        {course.duration ? (
+          <Text style={card.stat}>
+            {course.duration} year{course.duration > 1 ? 's' : ''}
+          </Text>
+        ) : null}
+        {intake ? <Text style={card.stat}>• {intake}</Text> : null}
+      </View>
+      */}
+
+      {/* Prime — not on GET /applications; restore when API adds isPrime
+      {course.isPrime ? (
+        <View style={card.primeBadge}>
+          <StarIcon size={10} color={colors.navy} />
+          <Text style={card.primeText}>Prime</Text>
+        </View>
+      ) : null}
+      */}
+
+      <AppliedPipelineStepper status={application.status} />
+
+      <View style={card.appliedFooter}>
+        {/* submittedAt — not on GET /applications list; restore when API adds submittedAt
+        {application.submittedAt ? (
+          <Text style={card.appliedDate}>
+            {`Submitted ${new Date(application.submittedAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}`}
+          </Text>
+        ) : (
+          <View />
+        )}
+        */}
+        <View />
+        <Text style={card.appliedStatus}>
+          {appliedStatusShortLabel(application.status)}
+        </Text>
+      </View>
+
+      <Pressable style={card.appliedCta} onPress={onTrack}>
+        <Text style={card.appliedCtaLabel}>{en.applicationsTab.trackStatus}</Text>
+      </Pressable>
+
+      {/* Legacy Applied card (logo-left + status badge) — kept for reuse
+      <View style={card.appliedRow}>
+        {university.logoUrl ?? course.universityLogo ? (
+          <Image
+            source={{uri: university.logoUrl ?? course.universityLogo}}
+            style={card.appliedLogo}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={[card.appliedLogo, card.logoPlaceholder]}>
+            <Text style={card.logoLetter}>{university.name.charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
         <View style={card.body}>
           <View style={card.statusRow}>
             <View style={[card.statusBadge, {backgroundColor: sc.bg}]}>
@@ -176,14 +325,14 @@ const AppliedCard = memo(function AppliedCard({
                 {statusLabel(application.status)}
               </Text>
             </View>
-            {appFeeStatus ? (
-              <Text style={card.feeStatus}>{feeStatusLabel(appFeeStatus)}</Text>
+            {item.appFeeStatus ? (
+              <Text style={card.feeStatus}>{feeStatusLabel(item.appFeeStatus)}</Text>
             ) : null}
           </View>
           <Text style={card.courseName} numberOfLines={2}>
             {course.name}
           </Text>
-          <Text style={card.uniName} numberOfLines={1}>
+          <Text style={card.uniNameApplied} numberOfLines={1}>
             {university.name}
           </Text>
           {fee ? <Text style={card.fee}>{fee}</Text> : null}
@@ -192,7 +341,8 @@ const AppliedCard = memo(function AppliedCard({
       <Pressable style={card.trackBtn} onPress={onTrack} hitSlop={8}>
         <Text style={card.trackLabel}>{en.applicationsTab.trackStatus}</Text>
       </Pressable>
-    </Pressable>
+      */}
+    </View>
   );
 });
 
@@ -207,10 +357,21 @@ export const ApplicationsScreen = memo(function ApplicationsScreen({
   onStartApplication,
   onOpenCourse,
   onTrackApplication,
+  onAddApplication,
   onRemoveShortlist,
   shortlistBusyId,
 }: ApplicationsScreenProps) {
   const insets = useSafeAreaInsets();
+
+  const headerSubtitle = useMemo(() => {
+    if (tab === 'shortlist' && shortlist[0]) {
+      return `${shortlist[0].name} • ${shortlist[0].universityName}`;
+    }
+    if (tab === 'applied' && applications[0]) {
+      return `${applications[0].course.name} • ${applications[0].university.name}`;
+    }
+    return undefined;
+  }, [tab, shortlist, applications]);
 
   const renderShortlist = useCallback<ListRenderItem<CourseListItem>>(
     ({item}) => (
@@ -227,14 +388,37 @@ export const ApplicationsScreen = memo(function ApplicationsScreen({
 
   const renderApplied = useCallback<ListRenderItem<ApplicationListItemDto>>(
     ({item}) => (
-      <AppliedCard
-        item={item}
-        onPress={() => onTrackApplication(item)}
-        onTrack={() => onTrackApplication(item)}
-      />
+      <AppliedCard item={item} onTrack={() => onTrackApplication(item)} />
     ),
     [onTrackApplication],
   );
+
+  const appliedListHeader = useMemo(() => {
+    if (applications.length === 0) {
+      return null;
+    }
+    return (
+      <Text style={styles.usageBanner}>
+        {en.applicationsTab.applicationsUsed(
+          applications.length,
+          MAX_STUDENT_APPLICATIONS,
+        )}
+      </Text>
+    );
+  }, [applications.length]);
+
+  const appliedListFooter = useMemo(() => {
+    if (!onAddApplication || applications.length >= MAX_STUDENT_APPLICATIONS) {
+      return null;
+    }
+    return (
+      <Pressable onPress={onAddApplication} hitSlop={8} style={styles.addAnother}>
+        <Text style={styles.addAnotherLabel}>
+          {en.applicationsTab.addAnotherApplication}
+        </Text>
+      </Pressable>
+    );
+  }, [applications.length, onAddApplication]);
 
   const emptyShortlist = (
     <View style={styles.empty}>
@@ -251,10 +435,14 @@ export const ApplicationsScreen = memo(function ApplicationsScreen({
   );
 
   return (
-    <View style={[styles.flex, {paddingTop: insets.top}]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{en.applicationsTab.title}</Text>
-        <SegmentTabs tab={tab} onTabChange={onTabChange} />
+    <View style={styles.flex}>
+      <WaveHeader
+        title={en.applicationsTab.headerTitle}
+        subtitle={headerSubtitle}
+      />
+
+      <View style={styles.tabsBar}>
+        <UnderlineTabs tab={tab} onTabChange={onTabChange} />
       </View>
 
       {loading ? (
@@ -264,7 +452,10 @@ export const ApplicationsScreen = memo(function ApplicationsScreen({
           data={shortlist}
           keyExtractor={c => String(c.id)}
           renderItem={renderShortlist}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[
+            styles.list,
+            {paddingBottom: insets.bottom + 24},
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -280,7 +471,10 @@ export const ApplicationsScreen = memo(function ApplicationsScreen({
           data={applications}
           keyExtractor={a => a.application.id}
           renderItem={renderApplied}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[
+            styles.list,
+            {paddingBottom: insets.bottom + 24},
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -289,6 +483,8 @@ export const ApplicationsScreen = memo(function ApplicationsScreen({
               tintColor={colors.primary}
             />
           }
+          ListHeaderComponent={appliedListHeader}
+          ListFooterComponent={appliedListFooter}
           ListEmptyComponent={emptyApplied}
         />
       )}
@@ -296,36 +492,104 @@ export const ApplicationsScreen = memo(function ApplicationsScreen({
   );
 });
 
-const seg = StyleSheet.create({
+const tabs = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
-    backgroundColor: colors.inputBg,
-    borderRadius: rad.full,
-    padding: 4,
-    marginTop: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  pill: {
+  tab: {
     flex: 1,
-    height: 40,
-    borderRadius: rad.full,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pillActive: {
-    backgroundColor: colors.white,
-    shadowColor: colors.shadow,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 2,
+    paddingTop: 4,
+    paddingBottom: 0,
   },
   label: {
     fontSize: FontSizes.size14,
     fontWeight: Weights.semibold,
     color: colors.textSecondary,
+    paddingVertical: 10,
   },
   labelActive: {
-    color: colors.navy,
+    color: colors.primary,
+    fontWeight: Weights.bold,
+  },
+  indicator: {
+    width: '100%',
+    height: 3,
+    backgroundColor: colors.primary,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+  },
+  indicatorSpacer: {
+    width: '100%',
+    height: 3,
+  },
+});
+
+const pipeline = StyleSheet.create({
+  wrap: {
+    width: '100%',
+    marginTop: 8,
+  },
+  track: {
+    flexDirection: 'row',
+  },
+  step: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotDone: {
+    backgroundColor: colors.accentTeal,
+    borderColor: colors.accentTeal,
+  },
+  dotActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  dotActiveInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.white,
+  },
+  line: {
+    flex: 1,
+    height: 2,
+    backgroundColor: colors.border,
+    marginHorizontal: 2,
+  },
+  lineDone: {
+    backgroundColor: colors.accentTeal,
+  },
+  label: {
+    fontSize: FontSizes.micro,
+    fontWeight: Weights.semibold,
+    color: colors.textSecondary,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  labelDone: {
+    color: colors.tagGreen,
+  },
+  labelActive: {
+    color: colors.primary,
     fontWeight: Weights.bold,
   },
 });
@@ -337,10 +601,132 @@ const card = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: 14,
-    gap: 12,
+    gap: 8,
   },
-  row: {flexDirection: 'row', gap: 12},
-  logo: {
+  top: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  courseName: {
+    flex: 1,
+    fontSize: FontSizes.body,
+    fontWeight: Weights.extrabold,
+    color: colors.navy,
+    lineHeight: 21,
+  },
+  matchBadge: {
+    ...Styles.matchBadge,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  matchText: Styles.matchBadgeText,
+  uniRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  uniDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.border,
+    flexShrink: 0,
+  },
+  uniLogo: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    flexShrink: 0,
+  },
+  uniName: {
+    flex: 1,
+    fontSize: FontSizes.micro,
+    fontWeight: Weights.semibold,
+    color: colors.textSecondary,
+    letterSpacing: 0.3,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  stat: {
+    fontSize: FontSizes.caption,
+    color: colors.textSecondary,
+    fontWeight: Weights.medium,
+  },
+  primeBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.yellowBadge,
+    borderRadius: rad.full,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  primeText: {
+    fontSize: FontSizes.micro,
+    fontWeight: Weights.bold,
+    color: colors.navy,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  statusLabel: {
+    fontSize: FontSizes.size13,
+    fontWeight: Weights.semibold,
+    color: colors.tagGreen,
+  },
+  footerCta: {
+    fontSize: FontSizes.size14,
+    fontWeight: Weights.semibold,
+    color: colors.primary,
+  },
+  appliedFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  appliedDate: {
+    fontSize: FontSizes.caption,
+    color: colors.textSecondary,
+    fontWeight: Weights.medium,
+  },
+  appliedStatus: {
+    fontSize: FontSizes.size13,
+    fontWeight: Weights.bold,
+    color: colors.primary,
+  },
+  appliedCta: {
+    marginTop: 4,
+    height: 44,
+    borderRadius: rad.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appliedCtaLabel: {
+    fontSize: FontSizes.size14,
+    fontWeight: Weights.semibold,
+    color: colors.white,
+  },
+  fee: {
+    fontSize: FontSizes.size11,
+    fontWeight: Weights.semibold,
+    color: colors.navy,
+    marginTop: 4,
+  },
+  appliedRow: {flexDirection: 'row', gap: 12},
+  appliedLogo: {
     width: 48,
     height: 48,
     borderRadius: 12,
@@ -358,63 +744,11 @@ const card = StyleSheet.create({
     color: colors.primary,
   },
   body: {flex: 1, gap: 2},
-  courseName: {
-    fontSize: FontSizes.size14,
-    fontWeight: Weights.bold,
-    color: colors.navy,
-    lineHeight: 19,
-  },
-  uniName: {
+  uniNameApplied: {
     fontSize: FontSizes.size11,
     fontWeight: Weights.semibold,
     color: colors.primary,
     marginTop: 2,
-  },
-  metaRow: {flexDirection: 'row', flexWrap: 'wrap', marginTop: 4},
-  meta: {fontSize: FontSizes.size11, color: colors.textSecondary},
-  fee: {
-    fontSize: FontSizes.size11,
-    fontWeight: Weights.semibold,
-    color: colors.navy,
-    marginTop: 4,
-  },
-  intake: {
-    fontSize: FontSizes.size11,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  removeBtn: {
-    paddingHorizontal: 12,
-    height: 44,
-    borderRadius: rad.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 88,
-  },
-  removeLabel: {
-    fontSize: FontSizes.size13,
-    fontWeight: Weights.semibold,
-    color: colors.textSecondary,
-  },
-  cta: {
-    flex: 1,
-    height: 44,
-    borderRadius: rad.full,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaLabel: {
-    fontSize: FontSizes.size14,
-    fontWeight: Weights.semibold,
-    color: colors.white,
   },
   statusRow: {
     flexDirection: 'row',
@@ -434,7 +768,7 @@ const card = StyleSheet.create({
     fontWeight: Weights.medium,
     color: colors.textSecondary,
   },
-  trackBtn: {alignSelf: 'flex-start'},
+  trackBtn: {alignSelf: 'flex-start', marginTop: 4},
   trackLabel: {
     fontSize: FontSizes.size14,
     fontWeight: Weights.semibold,
@@ -444,17 +778,28 @@ const card = StyleSheet.create({
 
 const styles = StyleSheet.create({
   flex: {flex: 1, backgroundColor: colors.background},
-  header: {
-    paddingHorizontal: H_PAD,
-    paddingTop: 16,
-    paddingBottom: 12,
+  tabsBar: {
     backgroundColor: colors.white,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    paddingHorizontal: H_PAD,
   },
-  title: {...Styles.screenTitle, color: colors.navy},
   spinner: {flex: 1, marginTop: 40},
-  list: {padding: H_PAD, gap: 10, flexGrow: 1, paddingBottom: 24},
+  list: {padding: H_PAD, gap: 10, flexGrow: 1},
+  usageBanner: {
+    fontSize: FontSizes.caption,
+    fontWeight: Weights.medium,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  addAnother: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  addAnotherLabel: {
+    fontSize: FontSizes.size14,
+    fontWeight: Weights.semibold,
+    color: colors.primary,
+  },
   empty: {
     flex: 1,
     alignItems: 'center',

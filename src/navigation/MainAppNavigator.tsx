@@ -83,7 +83,7 @@ export function MainAppNavigator() {
           ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="MessageTab"
         component={MessagesContainer}
         options={{
@@ -92,7 +92,7 @@ export function MainAppNavigator() {
             <TabMessageIcon size={size ?? 22} focused={focused} />
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
         name="ProfileTab"
         component={ProfileStackNavigator}

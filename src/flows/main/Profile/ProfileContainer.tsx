@@ -5,7 +5,7 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {errorCodes, isErrorWithCode, pick} from '@react-native-documents/picker';
 import {ProfileScreen} from './ProfileScreen';
-import {DOCUMENT_TYPES} from './profileConstants';
+import {BUDGET_OPTIONS, DOCUMENT_TYPES} from './profileConstants';
 import {useAuthStore} from '../../../stores/authStore';
 import {postSignOut} from '../../../api/authApi';
 import {
@@ -108,10 +108,11 @@ export function ProfileContainer() {
   const studyPrefs = useMemo(
     () => ({
       countries: sp?.preferredDestination ?? '🇺🇸 USA, 🇬🇧 UK, 🇨🇦 CA',
-      field: sp?.gradesObtained?.split('|')[1] ?? 'CS, Maths, Physics',
-      budget: sp?.budgetCurrency
-        ? `${sp.budgetCurrency} tier`
-        : '$6000-$12000/yr',
+      field: sp?.gradesObtained?.split('|')[1]?.trim() ?? 'CS, Maths, Physics',
+      budget:
+        sp?.budgetCurrency && BUDGET_OPTIONS.includes(sp.budgetCurrency as (typeof BUDGET_OPTIONS)[number])
+          ? sp.budgetCurrency
+          : BUDGET_OPTIONS[2],
     }),
     [sp],
   );
@@ -134,14 +135,16 @@ export function ProfileContainer() {
   const docRows = useMemo(() => mapDocuments(documents), [documents]);
 
   const counselor = useMemo(
-    () => ({
-      name: 'Kwame Mensah',
-      role: 'MatchMyUni Verified Agent',
-      location: 'Accra, Ghana',
-      rating: '4.9',
-      placed: '47 students placed',
-      initials: 'KM',
-    }),
+    () =>
+      // Placeholder — no counselor API on GET /user/details yet; keep UI for later wiring
+      ({
+        name: 'Kwame Mensah',
+        role: 'MatchMyUni Verified Agent',
+        location: 'Accra, Ghana',
+        rating: '4.9',
+        placed: '47 students placed',
+        initials: 'KM',
+      }),
     [],
   );
 
@@ -211,6 +214,7 @@ export function ProfileContainer() {
       documents={docRows}
       counselor={counselor}
       onEditProfile={() => navigation.navigate('EditProfile')}
+      onEditAcademic={() => navigation.navigate('EditProfile')}
       onStudyPreferences={() => navigation.navigate('StudyPreferences')}
       onUploadDocument={onUploadDocument}
       onNotifications={() => navigation.navigate('ProfileNotifications')}

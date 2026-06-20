@@ -59,6 +59,7 @@ import {
   intakesForApplication,
   pickDefaultIntake,
 } from '../../../utils/applicationFlow';
+import {buildCourseCostBreakdown} from '../CourseDetails/courseCostBreakdown';
 
 import {resolvePickedFileForUpload} from '../../../utils/pickedFile';
 import {en} from '../../../utils/strings/en';
@@ -201,6 +202,8 @@ export function StartApplicationContainer() {
         courseId: course.id,
         source: fetchedCourse ? 'GET /courses/:id' : 'navigation courseData',
         applicationFee: course.applicationFee,
+        depositFee: course.depositFee,
+        currencySymbol: course.currencySymbol,
         registrationFee: course.registrationFee,
         applicableTuitionFee: course.applicableTuitionFee,
         isPrime: course.isPrime,
@@ -300,6 +303,11 @@ export function StartApplicationContainer() {
     activeIntake?.applicationDeadline,
   );
 
+  const projectedFeeRows = useMemo(
+    () => (course ? feeRowsFromCourse(course) : []),
+    [course],
+  );
+
   const applicationBreakdown = useMemo((): FeeBreakdownRow[] => {
     const fromApi = feeRowsFromApplicationFees(applicationDetail?.applicationFees);
     if (fromApi.length) {
@@ -309,16 +317,32 @@ export function StartApplicationContainer() {
       });
       return fromApi;
     }
-    if (course) {
-      const projected = feeRowsFromCourse(course);
+    if (projectedFeeRows.length) {
       console.log(FLOW_LOG, 'Application Breakdown', {
         source: 'GET /courses/:id fee fields (projected)',
-        rows: projected.length,
+        rows: projectedFeeRows.length,
       });
-      return projected;
+      return projectedFeeRows;
     }
     return [];
-  }, [applicationDetail?.applicationFees, course]);
+  }, [applicationDetail?.applicationFees, projectedFeeRows]);
+
+  const costBreakdown = useMemo(
+    () => (course ? buildCourseCostBreakdown(course) : null),
+    [course],
+  );
+
+  useEffect(() => {
+    if (!course || !costBreakdown) {
+      return;
+    }
+    console.log(FLOW_LOG, 'Cost Breakdown', {
+      source: 'GET /courses/:id fee fields',
+      firstYearTotal: costBreakdown.firstYearTotal,
+      recurringYearlyCost: costBreakdown.recurringYearlyCost,
+      lineItems: costBreakdown.lineItems.length,
+    });
+  }, [course, costBreakdown]);
 
   const applicationFeeAmount = useMemo(() => {
     const fromDetail = applicationDetail?.applicationFees?.find(
@@ -327,24 +351,28 @@ export function StartApplicationContainer() {
     if (fromDetail != null) {
       return fromDetail.requiredAmount;
     }
-    return course?.applicationFee ?? null;
-  }, [applicationDetail?.applicationFees, course?.applicationFee]);
+    return (
+      projectedFeeRows.find(r => r.label === 'Application fee')?.amount ?? null
+    );
+  }, [applicationDetail?.applicationFees, projectedFeeRows]);
 
   useEffect(() => {
-    if (applicationFeeAmount == null || applicationFeeAmount === 0) {
+    if (!course) {
+      return;
+    }
+    if (course.depositFee == null || course.depositFee === 0) {
       logSkippedSection(
         'Application fee card',
-        'applicationFee is 0 or absent on GET /courses/:id — UI kept commented for reuse',
+        'depositFee is 0 or absent on GET /courses/:id',
       );
     } else {
-      console.log(FLOW_LOG, 'Application fee', {
-        source: applicationDetail
-          ? 'GET /applications/by-ids applicationFees'
-          : 'GET /courses/:id applicationFee',
-        amount: applicationFeeAmount,
+      console.log(FLOW_LOG, 'Application fee card', {
+        source: 'GET /courses/:id depositFee',
+        currencySymbol: course.currencySymbol,
+        depositFee: course.depositFee,
       });
     }
-  }, [applicationFeeAmount, applicationDetail]);
+  }, [course]);
 
   const {mutate: doUpload} = useMutation({
     mutationFn: ({
@@ -389,11 +417,22 @@ export function StartApplicationContainer() {
     },
 
     onSuccess: app => {
+      console.log(FLOW_LOG, 'create application success', {
+        applicationId: app.id,
+        courseId: app.courseId,
+        intakeId: app.intakeId,
+        status: app.status,
+        feeCurrency: app.feeCurrency,
+      });
       queryClient.invalidateQueries({queryKey: ['applications']});
 
       const fee = applicationFeeAmount ?? course?.applicationFee ?? 0;
       const courseName = course?.name ?? route.params.courseName;
       const universityName = course?.universityName ?? routeUni;
+
+      const courseDataJson = course
+        ? JSON.stringify(course)
+        : route.params.courseData;
 
       if (fee > 0) {
         navigation.replace('ApplicationPayment', {
@@ -403,18 +442,30 @@ export function StartApplicationContainer() {
           universityName,
           applicationFee: fee,
           currencySymbol: course?.currencySymbol,
+          matchPct: route.params.matchPct,
+          courseData: courseDataJson,
         });
         return;
       }
 
       navigation.replace('ApplicationSubmitted', {
         applicationId: app.id,
+        courseId,
         courseName,
         universityName,
+        matchPct: route.params.matchPct,
+        courseData: courseDataJson,
+        intakeLabel: app.intakeLabel ?? activeIntake?.label,
       });
     },
 
     onError: (e: Error) => {
+      console.error(FLOW_LOG, 'create application failed', {
+        courseId,
+        intakeId:
+          activeIntake && activeIntake.id > 0 ? activeIntake.id : undefined,
+        err: e,
+      });
       Alert.alert(
         'Submission failed',
         getApiErrorMessage(e, en.errors.generic),
@@ -578,8 +629,8 @@ export function StartApplicationContainer() {
       matchPct={matchPct}
       requiredDocs={requiredDocs}
       uploadingKey={uploadingKey}
-      applicationFee={applicationFeeAmount}
       applicationBreakdown={applicationBreakdown}
+      costBreakdown={costBreakdown}
       deadlineDate={deadlineDate}
       deadlineRelative={deadlineRelative}
       intakes={intakes}

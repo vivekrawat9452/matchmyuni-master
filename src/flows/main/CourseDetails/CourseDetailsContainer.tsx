@@ -7,6 +7,7 @@ import type {
 } from '@react-navigation/native-stack';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {CourseDetailsScreen} from './CourseDetailsScreen';
+import {buildCourseCostBreakdown} from './courseCostBreakdown';
 import {getCourseById} from '../../../api/publicApi';
 import {
   addToShortlist,
@@ -62,10 +63,6 @@ export function CourseDetailsContainer() {
 
   useEffect(() => {
     logSkippedSection(
-      'Cost Breakdown',
-      'no dedicated Cost Breakdown endpoint in prompts/API_Docs.md',
-    );
-    logSkippedSection(
       'Visa rate',
       'no visa rate field in prompts/API_Docs.md or prompts/apis',
     );
@@ -107,6 +104,11 @@ export function CourseDetailsContainer() {
   const course = fetchedCourse ?? passedCourse ?? null;
   const loading = isLoading && !course;
 
+  const costBreakdown = useMemo(
+    () => (course ? buildCourseCostBreakdown(course) : null),
+    [course],
+  );
+
   useEffect(() => {
     if (course && !isLoading) {
       console.log(DETAIL_LOG, 'course detail ready', {
@@ -118,6 +120,18 @@ export function CourseDetailsContainer() {
       });
     }
   }, [course, fetchedCourse, isLoading]);
+
+  useEffect(() => {
+    if (!course || !costBreakdown) {
+      return;
+    }
+    console.log(DETAIL_LOG, 'Cost Breakdown', {
+      source: 'GET /courses/:id fee fields',
+      firstYearTotal: costBreakdown.firstYearTotal,
+      recurringYearlyCost: costBreakdown.recurringYearlyCost,
+      lineItems: costBreakdown.lineItems.length,
+    });
+  }, [course, costBreakdown]);
 
   const isShortlisted = useMemo(
     () => (shortlist ?? []).some(c => c.id === courseId),
@@ -178,6 +192,7 @@ export function CourseDetailsContainer() {
       course={course}
       matchPct={matchPct}
       whyMatch={whyMatch}
+      costBreakdown={costBreakdown}
       loading={loading}
       isShortlisted={isShortlisted}
       onBack={onBack}

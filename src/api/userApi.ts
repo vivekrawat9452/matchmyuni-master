@@ -1,4 +1,5 @@
 import {apiClient, postFormData} from './client';
+import {parseCreatedApplication} from './applicationsUtils';
 import {normalizeUploadUri, uriForFormDataUpload} from '../utils/pickedFile';
 import {asArray, unwrapEnvelope} from './parseResponse';
 import {API_DOCUMENT_TYPES, type ApiDocumentType} from './documentTypes';
@@ -9,6 +10,7 @@ import type {
   UserDetailsDto,
   ApplicationDto,
   ApplicationDetailDto,
+  ApplicationListItemDto,
   ApplicationsGroupedDto,
   CreateApplicationPayload,
   CreatedApplicationDto,
@@ -94,12 +96,29 @@ export async function getUserDetails() {
 
 // ─── Student Profile ──────────────────────────────────────────────────────────
 
+const PATCH_STUDENT_PROFILE_LOG = '[PATCH /student-profiles/update]';
+
 export async function patchStudentProfile(body: StudentProfileUpdatePayload) {
-  const {data} = await apiClient.patch<ApiEnvelope<Record<string, unknown>>>(
-    '/student-profiles/update',
-    body,
-  );
-  return unwrapEnvelope(data) ?? (data as Record<string, unknown>);
+  console.log(PATCH_STUDENT_PROFILE_LOG, 'request', body);
+  try {
+    const res = await apiClient.patch<ApiEnvelope<Record<string, unknown>>>(
+      '/student-profiles/update',
+      body,
+    );
+    const updated =
+      unwrapEnvelope(res.data) ??
+      (res.data as unknown as Record<string, unknown>);
+    console.log(PATCH_STUDENT_PROFILE_LOG, 'response', {
+      httpStatus: res.status,
+      preferredDestination: updated?.preferredDestination,
+      budgetCurrency: updated?.budgetCurrency,
+      gradesObtained: updated?.gradesObtained,
+    });
+    return updated;
+  } catch (err) {
+    console.error(PATCH_STUDENT_PROFILE_LOG, 'failed', {body, err});
+    throw err;
+  }
 }
 
 // ─── Applications ─────────────────────────────────────────────────────────────
@@ -113,7 +132,9 @@ export async function getApplications(): Promise<ApplicationsGroupedDto> {
   console.log(APPLICATIONS_LOG, 'request');
   try {
     const res = await apiClient.get<
-      ApiEnvelope<ApplicationsGroupedDto | ApplicationDto[]>
+      ApiEnvelope<
+        ApplicationsGroupedDto | ApplicationListItemDto[] | ApplicationDto[]
+      >
     >('/applications');
     const body = unwrapEnvelope(res.data);
     let grouped: ApplicationsGroupedDto;
@@ -124,18 +145,28 @@ export async function getApplications(): Promise<ApplicationsGroupedDto> {
         paid: asArray(body.paid),
       };
     } else {
-      const flat = asArray(body as ApplicationDto[] | null);
+      const flat = asArray(
+        body as unknown as ApplicationListItemDto[] | null | undefined,
+      );
       grouped = {
         unpaid: [],
         pending: [],
-        paid: flat as unknown as ApplicationsGroupedDto['paid'],
+        paid: flat as ApplicationsGroupedDto['paid'],
       };
     }
+    const flatItems = [
+      ...grouped.unpaid,
+      ...grouped.pending,
+      ...grouped.paid,
+    ];
     console.log(APPLICATIONS_LOG, 'response', {
       httpStatus: res.status,
       unpaid: grouped.unpaid.length,
       pending: grouped.pending.length,
       paid: grouped.paid.length,
+      total: flatItems.length,
+      applicationIds: flatItems.map(item => item.application?.id),
+      statuses: flatItems.map(item => item.application?.status),
     });
     return grouped;
   } catch (err) {
@@ -172,24 +203,40 @@ export async function getApplicationsByIds(
 /** POST /applications/create — body: `{ courseId, intakeId? }` (applications-student-apis.md) */
 export async function createApplication(payload: CreateApplicationPayload) {
   console.log(CREATE_APPLICATION_LOG, 'request', payload);
-  const {data} = await apiClient.post<
-    ApiEnvelope<CreatedApplicationDto> | CreatedApplicationDto
-  >('/applications/create', {
-    courseId: payload.courseId,
-    ...(payload.intakeId != null ? {intakeId: payload.intakeId} : {}),
-  });
-  const created = unwrapEnvelope(data);
-  if (created && typeof created === 'object' && 'id' in created) {
-    const app = created as CreatedApplicationDto;
-    console.log(CREATE_APPLICATION_LOG, 'response', {
-      id: app.id,
-      courseId: app.courseId,
-      intakeId: app.intakeId,
-      status: app.status,
+  try {
+    const res = await apiClient.post<
+      ApiEnvelope<CreatedApplicationDto> | CreatedApplicationDto
+    >('/applications/create', {
+      courseId: payload.courseId,
+      ...(payload.intakeId != null ? {intakeId: payload.intakeId} : {}),
     });
-    return app;
+    const created = parseCreatedApplication(res.data);
+    if (created) {
+      console.log(CREATE_APPLICATION_LOG, 'response', {
+        httpStatus: res.status,
+        id: created.id,
+        userId: created.userId,
+        universityId: created.universityId,
+        courseId: created.courseId,
+        intakeId: created.intakeId,
+        intakeLabel: created.intakeLabel,
+        status: created.status,
+        feeCurrency: created.feeCurrency,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+      });
+      return created;
+    }
+    console.error(CREATE_APPLICATION_LOG, 'invalid response', {
+      httpStatus: res.status,
+      data: res.data,
+      unwrapped: unwrapEnvelope(res.data),
+    });
+    throw new Error('Invalid application create response');
+  } catch (err) {
+    console.error(CREATE_APPLICATION_LOG, 'failed', {payload, err});
+    throw err;
   }
-  throw new Error('Invalid application create response');
 }
 
 export async function deleteApplication(id: string) {

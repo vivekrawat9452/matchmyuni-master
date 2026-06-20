@@ -12,7 +12,15 @@ type Props = NativeStackScreenProps<AppStackList, 'ApplicationPayment'>;
 export function ApplicationPaymentContainer() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackList>>();
   const route = useRoute<Props['route']>();
-  const {courseName, applicationFee, currencySymbol = '$', universityName} = route.params;
+  const {
+    courseName,
+    applicationFee,
+    currencySymbol = '$',
+    universityName,
+    courseId,
+    matchPct,
+    courseData,
+  } = route.params;
 
   const feeLabel = `${currencySymbol}${applicationFee}`;
 
@@ -23,8 +31,19 @@ export function ApplicationPaymentContainer() {
       courseName,
       universityName,
       applicationId: route.params.applicationId,
+      courseId,
+      matchPct,
+      courseData,
     });
-  }, [navigation, courseName, universityName, route.params.applicationId]);
+  }, [
+    navigation,
+    courseName,
+    universityName,
+    courseId,
+    matchPct,
+    courseData,
+    route.params.applicationId,
+  ]);
 
   return (
     <ApplicationPaymentScreen

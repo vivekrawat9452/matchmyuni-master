@@ -57,10 +57,17 @@ export function StudyPreferencesContainer() {
   const onApply = useCallback(async () => {
     setSaving(true);
     try {
+      const subjectsPart = sp?.gradesObtained?.split('|')[0]?.trim() ?? '';
+      const gradesObtained =
+        fields.length > 0
+          ? [subjectsPart, fields.join(', ')].filter(Boolean).join('|')
+          : subjectsPart || undefined;
+
       await withLoader(async () => {
         await patchStudentProfile({
           preferredDestination: destinations.join(', '),
           budgetCurrency: budget,
+          ...(gradesObtained ? {gradesObtained} : {}),
         });
         await qc.invalidateQueries({queryKey: ['user', 'details']});
       }, 'Saving…');
@@ -70,7 +77,7 @@ export function StudyPreferencesContainer() {
     } finally {
       setSaving(false);
     }
-  }, [budget, destinations, navigation, qc]);
+  }, [budget, destinations, fields, navigation, qc, sp?.gradesObtained]);
 
   return (
     <StudyPreferencesScreen

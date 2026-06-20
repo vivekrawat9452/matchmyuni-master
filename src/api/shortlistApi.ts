@@ -1,6 +1,10 @@
 import type {AxiosError} from 'axios';
 import {apiClient} from './client';
 import {asArray, unwrapEnvelope} from './parseResponse';
+
+const GET_SHORTLIST_LOG = '[GET /api/user/shortlist]';
+const POST_SHORTLIST_LOG = '[POST /api/user/shortlist]';
+const DELETE_SHORTLIST_LOG = '[DELETE /api/user/shortlist/:courseId]';
 import {
   addLocalShortlist,
   getLocalShortlist,
@@ -53,10 +57,18 @@ async function withShortlistPath<T>(
 }
 
 async function fetchServerShortlist(): Promise<CourseListItem[] | null> {
+  console.log(GET_SHORTLIST_LOG, 'request');
   const result = await withShortlistPath(async path => {
     const {data} = await apiClient.get<ApiEnvelope<CourseListItem[]>>(path);
     const body = unwrapEnvelope(data) ?? data?.data;
-    return asArray(body);
+    const items = asArray(body);
+    console.log(GET_SHORTLIST_LOG, 'response', {
+      path,
+      count: items.length,
+      courseIds: items.map(c => c.id),
+      shortlistIds: items.map(c => (c as {shortlistId?: number}).shortlistId),
+    });
+    return items;
   });
   return result;
 }
@@ -80,11 +92,14 @@ export async function addToShortlist(courseId: number, course?: CourseListItem) 
   }
 
   try {
+    console.log(POST_SHORTLIST_LOG, 'request', {courseId});
     const result = await withShortlistPath(async path => {
       const {data} = await apiClient.post<ApiEnvelope<{id: number}>>(path, {
         courseId,
       });
-      return unwrapEnvelope(data) ?? data?.data;
+      const created = unwrapEnvelope(data) ?? data?.data;
+      console.log(POST_SHORTLIST_LOG, 'response', {path, courseId, created});
+      return created;
     });
     return result;
   } catch (err) {
@@ -99,11 +114,14 @@ export async function removeFromShortlist(courseId: number) {
   await removeLocalShortlist(courseId);
 
   try {
+    console.log(DELETE_SHORTLIST_LOG, 'request', {courseId});
     const result = await withShortlistPath(async path => {
       const {data} = await apiClient.delete<ApiEnvelope<{message: string}>>(
         `${path}/${courseId}`,
       );
-      return unwrapEnvelope(data) ?? data?.data;
+      const removed = unwrapEnvelope(data) ?? data?.data;
+      console.log(DELETE_SHORTLIST_LOG, 'response', {path, courseId, removed});
+      return removed;
     });
     return result;
   } catch (err) {

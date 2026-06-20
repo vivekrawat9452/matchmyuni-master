@@ -131,6 +131,26 @@ export function CheckCircleIcon({size = 20, color = '#22C55E'}: P) {
   );
 }
 
+/** Filled teal circle + white check — Figma discover_home_2_5 "Why you match" (node 416:5401) */
+export function FilledCheckCircleIcon({size = 20, fill = '#3CC09F'}: P & {fill?: string}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20">
+      <Path
+        d="M10 0a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"
+        fill={fill}
+      />
+      <Path
+        d="M6 10.2l2.4 2.4L14 7.2"
+        stroke="#FFFFFF"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </Svg>
+  );
+}
+
 export function ArrowUpCircleIcon({size = 20, color = '#E8613A'}: P) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">

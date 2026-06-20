@@ -97,6 +97,158 @@ export function isZeroFeeFullyPaid(
   return toFeeAmount(paidAmount) === 0 && toFeeAmount(requiredAmount) === 0;
 }
 
+/** Figma 593:2244 — Applied tab horizontal pipeline (4 steps). */
+export const APPLIED_PIPELINE_STEPS = [
+  'Submitted',
+  'Under review',
+  'Decision',
+  'Enrolled',
+] as const;
+
+export type AppliedPipelineState = {
+  /** Highest completed step index, or -1 when none complete. */
+  completedThrough: number;
+  /** In-progress step index, or null when between stages. */
+  activeIndex: number | null;
+};
+
+/** Map application.status onto the Applied-tab 4-step pipeline. */
+export function getAppliedPipelineState(status: string): AppliedPipelineState {
+  const key = normalizeApplicationStatus(status);
+  switch (key) {
+    case 'created':
+      return {completedThrough: -1, activeIndex: 0};
+    case 'applied':
+      return {completedThrough: 0, activeIndex: null};
+    case 'under_review':
+      return {completedThrough: 0, activeIndex: 1};
+    case 'conditional_offer':
+    case 'unconditional_offer':
+    case 'rejected':
+    case 'offer_declined':
+      return {completedThrough: 1, activeIndex: 2};
+    case 'offer_accepted':
+    case 'visa_applied':
+    case 'visa_rejected':
+    case 'deferred':
+    case 'withdrawn':
+      return {completedThrough: 2, activeIndex: 3};
+    case 'registered':
+    case 'visa_approved':
+    case 'reported':
+      return {completedThrough: 3, activeIndex: null};
+    default:
+      return {completedThrough: -1, activeIndex: 0};
+  }
+}
+
+/** Short status label for Applied card footer (Figma 593:2244). */
+export function appliedStatusShortLabel(status: string): string {
+  const key = normalizeApplicationStatus(status);
+  switch (key) {
+    case 'created':
+      return 'Draft';
+    case 'applied':
+      return 'Submitted';
+    case 'under_review':
+      return 'In-Review';
+    case 'conditional_offer':
+    case 'unconditional_offer':
+      return 'Decision';
+    case 'offer_accepted':
+      return 'Offer accepted';
+    case 'rejected':
+      return 'Rejected';
+    case 'registered':
+    case 'visa_approved':
+      return 'Enrolled';
+    default:
+      return statusLabel(status);
+  }
+}
+
+/** Figma 593:846 — static "Your Application Journey" steps; ticks driven by application.status. */
+export type ApplicationJourneyStep = {
+  key: string;
+  title: string;
+  description: string;
+  activeTag?: string;
+  expectedHint?: boolean;
+  downloadLabel?: string;
+};
+
+export const APPLICATION_JOURNEY_STEPS: ApplicationJourneyStep[] = [
+  {
+    key: 'profile',
+    title: 'Profile completed',
+    description: 'Personal information verified.',
+  },
+  {
+    key: 'submitted',
+    title: 'Application submitted',
+    description: 'Under review by admission office.',
+    activeTag: 'In-Review',
+  },
+  {
+    key: 'decision',
+    title: 'University decision',
+    description: 'Offer or rejection from university.',
+    expectedHint: true,
+    downloadLabel: 'Download Document',
+  },
+  {
+    key: 'offer_deposit',
+    title: 'Offer accepted and deposit',
+    description: 'CAS letter issued after deposit.',
+    downloadLabel: 'Download Offer letter',
+  },
+  {
+    key: 'visa_enrolled',
+    title: 'Visa approved and enrolled',
+    description: 'Final step — Report to university.',
+    downloadLabel: 'Download Visa letter',
+  },
+];
+
+export type JourneyStepState = {
+  /** Highest completed step index, or -1 when none complete. */
+  completedThrough: number;
+  /** In-progress step index, or null when between stages / all done. */
+  activeIndex: number | null;
+};
+
+/** Map application.status onto the static journey stepper (Figma 593:846). */
+export function getJourneyStepState(status: string): JourneyStepState {
+  const key = normalizeApplicationStatus(status);
+  switch (key) {
+    case 'created':
+      return {completedThrough: 0, activeIndex: null};
+    case 'applied':
+      return {completedThrough: 0, activeIndex: 1};
+    case 'under_review':
+      return {completedThrough: 1, activeIndex: 1};
+    case 'conditional_offer':
+    case 'unconditional_offer':
+    case 'rejected':
+    case 'offer_declined':
+      return {completedThrough: 1, activeIndex: 2};
+    case 'offer_accepted':
+      return {completedThrough: 2, activeIndex: 3};
+    case 'visa_applied':
+    case 'visa_rejected':
+      return {completedThrough: 3, activeIndex: 4};
+    case 'visa_approved':
+    case 'registered':
+    case 'reported':
+      return {completedThrough: 4, activeIndex: null};
+    case 'withdrawn':
+    case 'deferred':
+      return {completedThrough: -1, activeIndex: null};
+    default:
+      return {completedThrough: 0, activeIndex: 1};
+  }
+}
+
 export function feeStatusLabel(
   status: string | null | undefined,
   paidAmount?: number | string | null,
