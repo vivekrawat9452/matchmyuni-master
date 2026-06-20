@@ -152,12 +152,23 @@ export async function getDiscoverRecommendations(
     const unwrapped = unwrapEnvelope(res.data);
     console.log(DISCOVER_LOG, 'response', {
       httpStatus: res.status,
+      data: res.data,
       envelopeStatus: res.data?.status,
       hasEnvelopeData: res.data != null && 'data' in res.data,
       hasPreferences: unwrapped?.hasPreferences,
       resultsCount: unwrapped?.results?.length ?? 0,
       pagination: unwrapped?.pagination,
       firstCourseIds: unwrapped?.results?.slice(0, 3).map(r => r.courseId),
+      sampleResults: unwrapped?.results?.slice(0, 3).map(r => ({
+        courseId: r.courseId,
+        matchScore: r.matchScore,
+        whyMatch: r.whyMatch,
+        isPrime: r.course?.isPrime,
+        scholarshipAvailable: r.course?.scholarshipAvailable,
+        scholarshipType: r.course?.scholarshipType,
+        scholarshipDetails: r.course?.scholarshipDetails,
+        applicableTuitionFee: r.course?.applicableTuitionFee,
+      })),
     });
     if (!unwrapped) {
       console.warn(DISCOVER_LOG, 'unwrap returned null', {rawBody: res.data});

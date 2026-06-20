@@ -352,8 +352,8 @@ export const CourseDetailsScreen = memo(function CourseDetailsScreen({
           {whyMatch.length > 0 ? (
             <View style={s.section}>
               <SectionTitle>Why you match</SectionTitle>
-              {whyMatch.map(line => (
-                <WhyMatchBullet key={line} text={line} />
+              {whyMatch.map((line, index) => (
+                <WhyMatchBullet key={`${index}-${line}`} text={line} />
               ))}
             </View>
           ) : null}

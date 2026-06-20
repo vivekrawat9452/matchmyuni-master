@@ -10,11 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import {
-  CheckCircleIcon,
-  ShieldCheckIcon,
-  StarIcon,
-} from '../../../components/icons/ApplicationIcons';
+import {CheckCircleIcon, StarIcon} from '../../../components/icons/ApplicationIcons';
 import {colors} from '../../../utils/colors';
 import {FontSizes, Weights, Styles} from '../../../utils';
 import {rad} from '../../../utils/sizes';
@@ -25,15 +21,64 @@ const {width: W, height: H} = Dimensions.get('window');
 export const DISCOVER_SIDE_PAD = 18;
 export const DISCOVER_CARD_W = W - DISCOVER_SIDE_PAD * 2;
 export const DISCOVER_CARD_H = H * 0.63;
-const PHOTO_H = DISCOVER_CARD_H * 0.32;
 const PHOTO_INSET = 12;
 
-function parseScholarshipPct(label?: string | null): number {
-  if (!label) {
+/** GET /recommendations/discover → course.scholarshipDetails */
+function scholarshipPercent(course: CourseListItem): number {
+  if (!course.scholarshipAvailable) {
     return 0;
   }
-  const m = label.match(/(\d+)/);
-  return m ? parseInt(m[1], 10) : 0;
+  const details = course.scholarshipDetails;
+  if (details?.percentageMax != null) {
+    return details.percentageMax;
+  }
+  if (details?.percentageMin != null) {
+    return details.percentageMin;
+  }
+  const legacy = course.scholarshipOnTuitionFee?.match(/(\d+)/);
+  return legacy ? parseInt(legacy[1], 10) : 0;
+}
+
+function scholarshipChipLabel(course: CourseListItem): string | null {
+  if (!course.scholarshipAvailable) {
+    return null;
+  }
+  const pct = scholarshipPercent(course);
+  if (pct > 0) {
+    return `${pct}% scholarship`;
+  }
+  return 'Scholarship available';
+}
+
+function scholarshipPromoText(course: CourseListItem, pct: number): string | null {
+  if (!course.scholarshipAvailable || pct <= 0) {
+    return null;
+  }
+  const details = course.scholarshipDetails;
+  const years =
+    details?.validForYears === 'all_years'
+      ? 'All years'
+      : details?.validForYears?.replace(/_/g, ' ') ?? 'All years';
+
+  switch (course.scholarshipType) {
+    case 'flat_automatic':
+      return `${pct}% off - Auto applied - ${years}`;
+    case 'grade_based':
+      return `${pct}% off - Grade based - ${years}`;
+    case 'package': {
+      const includes =
+        (details as {includes?: string[]})?.includes?.join(', ') ?? 'Package';
+      return `${pct}% off - ${includes} - ${years}`;
+    }
+    case 'post_bursary': {
+      const timeline =
+        (details as {cashbackTimeline?: string})?.cashbackTimeline ??
+        'after payment';
+      return `${pct}% cashback - ${timeline}`;
+    }
+    default:
+      return `${pct}% off - Auto applied - ${years}`;
+  }
 }
 
 export function formatCardPricing(course: CourseListItem) {
@@ -42,17 +87,14 @@ export function formatCardPricing(course: CourseListItem) {
     return null;
   }
   const sym = course.currencySymbol ?? '$';
-  const pct = parseScholarshipPct(course.scholarshipOnTuitionFee);
+  const pct = scholarshipPercent(course);
   const listed =
     pct > 0 && pct < 100 ? Math.round(fee / (1 - pct / 100)) : null;
   return {
     main: `${sym}${Math.round(fee).toLocaleString()}`,
     listed: listed != null ? `${sym}${listed.toLocaleString()}` : null,
     pct,
-    promo:
-      pct > 0
-        ? `${pct}% off - Auto applied - All years`
-        : null,
+    promo: scholarshipPromoText(course, pct),
   };
 }
 
@@ -73,6 +115,7 @@ export function DiscoverCourseCard({
 }: DiscoverCourseCardProps) {
   const pricing = formatCardPricing(course);
   const photoH = height * 0.32;
+  const schChip = scholarshipChipLabel(course);
 
   return (
     <View style={[s.card, {width, height}]}>
@@ -82,7 +125,7 @@ export function DiscoverCourseCard({
             <Image
               source={{uri: course.universityLogo}}
               style={s.logo}
-              resizeMode="contain"
+              resizeMode="cover"
             />
           ) : (
             <View style={s.logoFallback}>
@@ -116,20 +159,19 @@ export function DiscoverCourseCard({
         <View style={Styles.hairline} />
 
         <View style={s.tags}>
-          {course.scholarshipOnTuitionFee ? (
-            <View style={Styles.tagPill}>
+          {schChip ? (
+            <View style={s.scholarshipPill}>
               <CheckCircleIcon size={14} color={colors.tagGreen} />
-              <Text style={Styles.tagPillText}>
-                {course.scholarshipOnTuitionFee} scholarship
-              </Text>
+              <Text style={s.scholarshipPillText}>{schChip}</Text>
             </View>
           ) : null}
-          {course.country ? (
-            <View style={Styles.tagPill}>
-              <ShieldCheckIcon size={14} color={colors.tagGreen} />
-              <Text style={Styles.tagPillText}>High visa approval rate</Text>
+          {/* Visa tag — no field in GET /recommendations/discover yet; restore when API adds visaSuccessPercent
+          {course.visaSuccessPercent != null ? (
+            <View style={s.visaPill}>
+              <Text style={s.visaPillText}>{course.visaSuccessPercent}% visa</Text>
             </View>
           ) : null}
+          */}
         </View>
 
         {pricing ? (
@@ -258,6 +300,23 @@ const s = StyleSheet.create({
     flex: 1,
   },
   tags: {flexDirection: 'row', gap: 8, flexWrap: 'wrap'},
+  scholarshipPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F7FFFB',
+    borderWidth: 1,
+    borderColor: '#D0F0E4',
+    borderRadius: rad.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  scholarshipPillText: {
+    fontSize: FontSizes.size11,
+    fontWeight: Weights.bold,
+    color: colors.tagGreen,
+  },
+  // visaPill / visaPillText — kept for when API exposes visaSuccessPercent
   pricingBlock: {gap: 4},
   priceLabel: {
     fontSize: FontSizes.caption,

@@ -690,7 +690,8 @@ export function DiscoverContainer() {
   const matchByCourseId = useMemo(() => {
     const map: Record<number, number> = {};
     discoverData?.results?.forEach(r => {
-      map[r.courseId] = r.matchScore;
+      const id = r.course.id ?? r.courseId;
+      map[id] = r.matchScore;
     });
     return map;
   }, [discoverData?.results]);
@@ -699,7 +700,8 @@ export function DiscoverContainer() {
     const map: Record<number, string[]> = {};
     discoverData?.results?.forEach(r => {
       if (r.whyMatch?.length) {
-        map[r.courseId] = r.whyMatch;
+        const id = r.course.id ?? r.courseId;
+        map[id] = r.whyMatch;
       }
     });
     return map;
@@ -786,14 +788,19 @@ export function DiscoverContainer() {
     setCardIndex(i => i + 1);
   }, []);
   const onTap = useCallback(
-    (c: CourseListItem) =>
+    (c: CourseListItem) => {
+      const matchResult = discoverData?.results?.find(
+        r => (r.course.id ?? r.courseId) === c.id,
+      );
+      const whyMatch = matchResult?.whyMatch ?? whyMatchByCourseId[c.id] ?? [];
       navigation.navigate('CourseDetails', {
         courseId: c.id,
-        matchPct: matchByCourseId[c.id] ?? 88,
+        matchPct: matchResult?.matchScore ?? matchByCourseId[c.id] ?? 88,
         courseData: JSON.stringify(c),
-        whyMatchData: JSON.stringify(whyMatchByCourseId[c.id] ?? []),
-      }),
-    [matchByCourseId, whyMatchByCourseId, navigation],
+        whyMatchData: JSON.stringify(whyMatch),
+      });
+    },
+    [discoverData?.results, matchByCourseId, whyMatchByCourseId, navigation],
   );
 
   // ── Filter handlers ───────────────────────────────────────────────────────
@@ -923,7 +930,7 @@ export function DiscoverContainer() {
                 style={styles.actionReject}
                 onPress={() => onSwipeLeft(topCourse)}
                 accessibilityLabel="Pass">
-                <X size={28} color={colors.primary} strokeWidth={2.5} />
+                <X size={28} color="#DC2626" strokeWidth={2.5} />
               </Pressable>
               <Pressable
                 style={styles.actionInfo}

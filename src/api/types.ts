@@ -169,6 +169,14 @@ export interface CourseListItem {
   tags?: string[];
 }
 
+/** Lightweight item from GET /courses/search autocomplete */
+export interface CourseSearchResult {
+  id: number;
+  name: string;
+  universityName?: string;
+  search?: string;
+}
+
 /** Normalised page returned by getCourses() after shaping the real API response */
 export interface CoursesPage {
   courses: CourseListItem[];

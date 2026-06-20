@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -6,8 +6,9 @@ import {useQuery} from '@tanstack/react-query';
 import {HomeDashboardScreen} from './HomeDashboardScreen';
 import {getUserMe} from '../../../api/userApi';
 import {getDiscoverRecommendations} from '../../../api/recommendationApi';
+import {searchCourses} from '../../../api/publicApi';
 import {useAuthStore} from '../../../stores/authStore';
-import type {CourseListItem} from '../../../api/types';
+import type {CourseListItem, CourseSearchResult} from '../../../api/types';
 import type {AppStackList} from '../../../navigation/AppStackNavigator';
 
 const HOME_LOG = '[Home discover_home_1_0]';
@@ -21,6 +22,42 @@ export function HomeDashboardContainer() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackList>>();
   const u = useAuthStore(s => s.user);
   const isAuth = !!u;
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  const onSearchChange = useCallback((text: string) => {
+    setSearchQuery(text);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => setDebouncedSearch(text), 300);
+  }, []);
+
+  const {data: searchResults = [], isFetching: searchLoading} = useQuery({
+    queryKey: ['courses', 'search', debouncedSearch],
+    queryFn: () => searchCourses(debouncedSearch),
+    enabled: debouncedSearch.trim().length > 0,
+    staleTime: 30 * 1000,
+  });
+
+  const onSelectSearchCourse = useCallback(
+    (course: CourseSearchResult) => {
+      setSearchQuery('');
+      setDebouncedSearch('');
+      navigation.navigate('CourseDetails', {courseId: course.id});
+    },
+    [navigation],
+  );
 
   useEffect(() => {
     logSkippedSection('User Journey');
@@ -103,7 +140,11 @@ export function HomeDashboardContainer() {
       loading={meLoading || discoverLoading}
       refreshing={refMe || refDiscover}
       onRefresh={onRefresh}
-      onSearchPress={() => navigation.navigate('Tabs', {screen: 'DiscoverTab'} as never)}
+      searchQuery={searchQuery}
+      onSearchChange={onSearchChange}
+      searchResults={searchResults}
+      searchLoading={searchLoading}
+      onSelectSearchCourse={onSelectSearchCourse}
       onOpenCourse={onOpenCourse}
       onSeeAllMatches={onSeeAllMatches}
       onBell={onBell}

@@ -8,71 +8,52 @@ All endpoints require **student authentication** (`Authorization: Bearer <supaba
 
 ## GET `/applications`
 
-Returns all applications for the authenticated student, grouped by application fee payment status.
+Returns all applications for the authenticated student as a flat array, ordered by most recently created.
 
 ### Response `200`
 
 ```json
 {
   "status": "success",
-  "data": {
-    "unpaid": [ ... ],
-    "pending": [ ... ],
-    "paid": [ ... ]
-  }
-}
-```
-
-**Grouping logic:**
-
-| Group | `appFeeStatus` values |
-|-------|-----------------------|
-| `unpaid` | `null` or `"unpaid"` |
-| `pending` | `"pending"` or `"partially_paid"` |
-| `paid` | `"paid"` |
-
-Each item in all three groups has the same shape:
-
-```json
-{
-  "application": {
-    "id": "uuid",
-    "status": "created",
-    "receiptUrl": null
-  },
-  "course": {
-    "id": 1,
-    "name": "MSc Computer Science",
-    "country": "United Kingdom",
-    "universityId": 42,
-    "universityName": "University of London",
-    "applicationFee": 50,
-    "currencySymbol": "£",
-    "currency": "GBP"
-  },
-  "university": {
-    "name": "University of London",
-    "logoUrl": "https://cdn.example.com/logos/uol.png"
-  },
-  "appFeeStatus": "unpaid",
-  "registrationFee": {
-    "status": "unpaid",
-    "requiredAmount": 500,
-    "paidAmount": 0
-  },
-  "tuitionFee": {
-    "status": "unpaid",
-    "requiredAmount": 18000,
-    "paidAmount": 0
-  },
-  "hasPendingPayment": false
+  "data": [
+    {
+      "application": {
+        "id": "uuid",
+        "status": "created",
+        "receiptUrl": null
+      },
+      "course": {
+        "id": 1,
+        "name": "BSc Computer Science",
+        "country": "India",
+        "universityId": 5,
+        "universityName": "MIT WPU",
+        "applicationFee": 0,
+        "currencySymbol": "$",
+        "currency": "USD"
+      },
+      "university": {
+        "name": "MIT WPU",
+        "logoUrl": "https://cdn.example.com/logos/mitwpu.png"
+      },
+      "registrationFee": {
+        "status": "unpaid",
+        "requiredAmount": 500,
+        "paidAmount": 0
+      },
+      "tuitionFee": {
+        "status": "unpaid",
+        "requiredAmount": 8400,
+        "paidAmount": 0
+      }
+    }
+  ]
 }
 ```
 
 **Field notes:**
 
-- `registrationFee` / `tuitionFee` — `null` when no fee requirement record exists for that type
-- `hasPendingPayment` — `true` if there is any payment record with `status = 'pending'` for this application
+- `registrationFee` / `tuitionFee` — `null` when no fee requirement record exists for that type yet.
 
 ### Error Responses
 
@@ -90,7 +71,7 @@ Returns full application detail for a specific set of application IDs. All reque
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `ids` | string | Yes | Comma-separated list of application UUIDs, e.g. `ids=uuid1,uuid2` |
+| `ids` | string | Yes | Comma-separated application UUIDs, e.g. `ids=uuid1,uuid2` |
 
 ### Response `200`
 
@@ -102,14 +83,14 @@ Returns full application detail for a specific set of application IDs. All reque
       "application": {
         "id": "uuid",
         "userId": "uuid",
-        "universityId": 42,
+        "universityId": 5,
         "courseId": 1,
-        "intakeId": 10,
+        "intakeId": 12,
         "intakeMonth": 9,
         "intakeYear": 2025,
         "intakeLabel": "Fall 2025",
         "status": "created",
-        "feeCurrency": "GBP",
+        "feeCurrency": "USD",
         "receiptUrl": null,
         "receiptUploadedAt": null,
         "eligibilityStatus": "pending",
@@ -121,30 +102,32 @@ Returns full application detail for a specific set of application IDs. All reque
       },
       "course": {
         "id": 1,
-        "name": "MSc Computer Science",
-        "country": "United Kingdom",
-        "universityId": 42,
-        "universityName": "University of London",
-        ...
+        "name": "BSc Computer Science",
+        "country": "India",
+        "universityId": 5,
+        "universityName": "MIT WPU",
+        "applicationFee": 0,
+        "currencySymbol": "$",
+        "currency": "USD"
       },
       "university": {
-        "name": "University of London",
-        "logoUrl": "https://cdn.example.com/logos/uol.png"
+        "name": "MIT WPU",
+        "logoUrl": "https://cdn.example.com/logos/mitwpu.png"
       },
-      "applicationFees": [
+      "feeRequirements": [
         {
           "id": "uuid",
           "applicationId": "uuid",
-          "feeType": "application_fee",
-          "requiredAmount": 50,
+          "feeType": "registration_fee",
+          "requiredAmount": 500,
           "paidAmount": 0,
           "status": "unpaid"
         },
         {
           "id": "uuid",
           "applicationId": "uuid",
-          "feeType": "registration_fee",
-          "requiredAmount": 500,
+          "feeType": "tuition_fee",
+          "requiredAmount": 8400,
           "paidAmount": 0,
           "status": "unpaid"
         }
@@ -153,8 +136,8 @@ Returns full application detail for a specific set of application IDs. All reque
         {
           "id": "uuid",
           "applicationId": "uuid",
-          "amount": 50,
-          "currency": "GBP",
+          "amount": 500,
+          "currency": "USD",
           "status": "completed",
           "paymentMethod": "stripe",
           "transactionId": "pi_xxx",
@@ -166,6 +149,11 @@ Returns full application detail for a specific set of application IDs. All reque
   ]
 }
 ```
+
+**Field notes:**
+
+- `feeRequirements` — All fee requirement records for the application. May be empty `[]` if not yet set up.
+- `payments` — All payment records for the application regardless of payment status.
 
 ### Error Responses
 
@@ -187,7 +175,7 @@ Creates a new application for the authenticated student.
 ```json
 {
   "courseId": 1,
-  "intakeId": 10
+  "intakeId": 12
 }
 ```
 
@@ -200,10 +188,11 @@ No extra fields are allowed (schema is `.strict()`).
 
 ### Business Rules
 
-- Student cannot have more than **5 applications** in total
-- Cannot create a duplicate application for the same course
-- The intake must exist and belong to the given course
-- Intake `status` must be `yet_to_open` or `open` — applications are rejected for `closed`, `cancelled`, or `full` intakes
+- Student cannot have more than **5 applications** in total.
+- Cannot create a duplicate application for the same course.
+- The intake must exist and belong to the given course.
+- Intake `status` must be `yet_to_open` or `open` — applications are rejected for `closed`, `cancelled`, or `full` intakes.
+- If the course's `applicationFee` is `0`, the application is created with status `"applied"` instead of `"created"`.
 
 ### Response `201`
 
@@ -214,14 +203,14 @@ No extra fields are allowed (schema is `.strict()`).
   "data": {
     "id": "uuid",
     "userId": "uuid",
-    "universityId": 42,
+    "universityId": 5,
     "courseId": 1,
-    "intakeId": 10,
+    "intakeId": 12,
     "intakeMonth": 9,
     "intakeYear": 2025,
     "intakeLabel": "Fall 2025",
     "status": "created",
-    "feeCurrency": "GBP",
+    "feeCurrency": "USD",
     "receiptUrl": null,
     "receiptUploadedAt": null,
     "eligibilityStatus": "pending",
@@ -236,10 +225,9 @@ No extra fields are allowed (schema is `.strict()`).
 
 **Side effects (async, do not affect the response):**
 
-- Fee requirement records (`application_fee`, `registration_fee`, `tuition_fee`) are created automatically inside a transaction
-- Intake `applicationsCount` is incremented
-- If the student has a referrer admin, a `admin.application.created` notification is sent to that admin
-- An audit log entry (`application.created`) is written
+- Intake `applicationsCount` is incremented.
+- If the student has a referrer admin, an `admin.application.created` notification is sent to that admin.
+- An audit log entry (`application.created`) is written.
 
 ### Error Responses
 
@@ -263,14 +251,34 @@ Deletes an application belonging to the authenticated student.
 |-----------|------|-------------|
 | `id` | string (UUID) | Application ID |
 
+### Business Rules
+
+- Cannot delete if status is `offer_accepted`, `registered`, or `reported`.
+- Cannot delete if the application has any **completed** payments.
+- On successful deletion, the intake's `applicationsCount` is decremented (floored at 0).
+
 ### Response `200`
+
+Returns the full deleted application record.
 
 ```json
 {
   "status": "success",
   "message": "Application deleted successfully",
   "data": {
-    "id": "uuid"
+    "id": "uuid",
+    "userId": "uuid",
+    "universityId": 5,
+    "courseId": 1,
+    "intakeId": 12,
+    "intakeMonth": 9,
+    "intakeYear": 2025,
+    "intakeLabel": "Fall 2025",
+    "status": "created",
+    "feeCurrency": "USD",
+    "eligibilityStatus": "pending",
+    "createdAt": "2025-05-10T14:30:00.000Z",
+    "updatedAt": "2025-05-10T14:30:00.000Z"
   }
 }
 ```
@@ -279,7 +287,7 @@ Deletes an application belonging to the authenticated student.
 
 | Status | Description |
 |--------|-------------|
-| `400` | Application ID is missing |
+| `400` | Application ID is missing, status blocks deletion, or application has completed payments |
 | `401` | Missing or invalid auth token |
 | `404` | Application not found or does not belong to this student |
 
@@ -287,12 +295,10 @@ Deletes an application belonging to the authenticated student.
 
 ## Application Statuses
 
-Applications move through the following statuses (managed by admins after creation):
-
 | Status | Description |
 |--------|-------------|
-| `created` | Initial state after student submits |
-| `applied` | Submitted to the university |
+| `created` | Initial state after student submits (when `applicationFee > 0`) |
+| `applied` | Submitted to the university (or initial state when `applicationFee = 0`) |
 | `under_review` | University is reviewing |
 | `conditional_offer` | Conditional offer received |
 | `unconditional_offer` | Unconditional offer received |
@@ -311,7 +317,6 @@ Applications move through the following statuses (managed by admins after creati
 
 | `feeType` | Description |
 |-----------|-------------|
-| `application_fee` | One-time application processing fee |
 | `registration_fee` | Registration/enrollment deposit |
 | `tuition_fee` | First-year (or semester) tuition payment |
 

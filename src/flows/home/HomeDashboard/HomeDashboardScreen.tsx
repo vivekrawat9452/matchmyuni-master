@@ -21,6 +21,7 @@ import {
   RefreshControl,
   Image,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import {Search, Star} from 'lucide-react-native';
 import Svg, {Path} from 'react-native-svg';
@@ -28,8 +29,8 @@ import {BellIcon} from '../../../components/icons/TabIcons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {colors} from '../../../utils/colors';
 import {FontSizes, Weights, Styles} from '../../../utils';
-import {hPad, rad, font} from '../../../utils/sizes';
-import type {CourseListItem} from '../../../api/types';
+import {hPad, rad} from '../../../utils/sizes';
+import type {CourseListItem, CourseSearchResult} from '../../../api/types';
 
 const {width: W} = Dimensions.get('window');
 const H_PAD = hPad(5);
@@ -45,7 +46,11 @@ type Props = {
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
-  onSearchPress: () => void;
+  searchQuery: string;
+  onSearchChange: (text: string) => void;
+  searchResults: CourseSearchResult[];
+  searchLoading: boolean;
+  onSelectSearchCourse: (course: CourseSearchResult) => void;
   onOpenCourse: (c: MatchCourse) => void;
   onSeeAllMatches: () => void;
   onBell: () => void;
@@ -64,14 +69,24 @@ const SVG_VB_H = 56; // cropped viewBox — only shows the bottom S-curve portio
 function HomeHeader({
   displayName,
   onBell,
-  onSearchPress,
+  searchQuery,
+  onSearchChange,
+  searchResults,
+  searchLoading,
+  onSelectSearchCourse,
   insets,
 }: {
   displayName: string;
   onBell: () => void;
-  onSearchPress: () => void;
+  searchQuery: string;
+  onSearchChange: (text: string) => void;
+  searchResults: CourseSearchResult[];
+  searchLoading: boolean;
+  onSelectSearchCourse: (course: CourseSearchResult) => void;
   insets: {top: number};
 }) {
+  const showDropdown = searchQuery.trim().length > 0;
+
   return (
     <View style={header.wrap}>
       {/* ── Orange block: greeting + bell + search bar ── */}
@@ -89,11 +104,50 @@ function HomeHeader({
           </Pressable>
         </View>
 
-        {/* Search bar sits at the bottom of the orange area */}
-        <Pressable style={header.searchBar} onPress={onSearchPress}>
-          <Search size={15} color={colors.textMuted} />
-          <Text style={header.searchText}>Search university or courses</Text>
-        </Pressable>
+        {/* Search bar with autocomplete dropdown */}
+        <View style={header.searchWrap}>
+          <View style={header.searchBar}>
+            <Search size={15} color={colors.textMuted} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={onSearchChange}
+              placeholder="Search courses"
+              placeholderTextColor={colors.textMuted}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+              autoCorrect={false}
+              autoCapitalize="none"
+              style={header.searchInput}
+            />
+            {searchLoading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : null}
+          </View>
+
+          {showDropdown ? (
+            <View style={header.dropdown}>
+              {searchLoading && searchResults.length === 0 ? (
+                <View style={header.dropdownItem}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              ) : searchResults.length > 0 ? (
+                searchResults.map((course, index) => (
+                  <Pressable
+                    key={course.id}
+                    style={[
+                      header.dropdownItem,
+                      index < searchResults.length - 1 && header.dropdownItemBorder,
+                    ]}
+                    onPress={() => onSelectSearchCourse(course)}>
+                    <Text style={header.dropdownText} numberOfLines={1}>
+                      {course.name}
+                    </Text>
+                  </Pressable>
+                ))
+              ) : null}
+            </View>
+          ) : null}
+        </View>
       </View>
 
       {/* ── Wave S-curve: orange fades to cream ── */}
@@ -116,12 +170,13 @@ function HomeHeader({
 }
 
 const header = StyleSheet.create({
-  wrap: {backgroundColor: colors.background},
+  wrap: {backgroundColor: colors.background, zIndex: 10},
 
   orange: {
     backgroundColor: colors.primary,
     paddingHorizontal: H_PAD,
     paddingBottom: 16,
+    overflow: 'visible',
   },
   row: {
     flexDirection: 'row',
@@ -155,6 +210,11 @@ const header = StyleSheet.create({
   },
 
   /** Search bar: white pill sitting on the orange background */
+  searchWrap: {
+    position: 'relative',
+    zIndex: 20,
+    overflow: 'visible',
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -169,11 +229,41 @@ const header = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  searchText: {
-    fontSize: FontSizes.small,
-    color: colors.textMuted,
+  searchInput: {
     flex: 1,
+    fontSize: FontSizes.small,
+    color: colors.navy,
     letterSpacing: -0.14,
+    paddingVertical: 0,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 48,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.white,
+    borderRadius: rad.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dropdownItemBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  dropdownText: {
+    fontSize: FontSizes.small,
+    color: colors.navy,
+    fontWeight: Weights.medium,
   },
 
   /** S-curve strip below the orange block */
@@ -359,7 +449,11 @@ export const HomeDashboardScreen = memo(function HomeDashboardScreen({
   loading,
   refreshing,
   onRefresh,
-  onSearchPress,
+  searchQuery,
+  onSearchChange,
+  searchResults,
+  searchLoading,
+  onSelectSearchCourse,
   onOpenCourse,
   onSeeAllMatches,
   onBell,
@@ -376,6 +470,7 @@ export const HomeDashboardScreen = memo(function HomeDashboardScreen({
       style={styles.flex}
       contentContainerStyle={{paddingBottom: insets.bottom + 32}}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -388,7 +483,11 @@ export const HomeDashboardScreen = memo(function HomeDashboardScreen({
       <HomeHeader
         displayName={displayName}
         onBell={onBell}
-        onSearchPress={onSearchPress}
+        searchQuery={searchQuery}
+        onSearchChange={onSearchChange}
+        searchResults={searchResults}
+        searchLoading={searchLoading}
+        onSelectSearchCourse={onSelectSearchCourse}
         insets={insets}
       />
 

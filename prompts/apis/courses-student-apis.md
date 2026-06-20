@@ -1,12 +1,12 @@
 # Courses API — Student / Public
 
-Base URL prefix: `/api/courses`
+Base URL prefix: `/courses`
 
 All endpoints are **public** (no authentication required).
 
 ---
 
-## GET `/api/courses`
+## GET `/courses`
 
 Returns a paginated, filtered list of courses. Disabled courses and courses belonging to disabled universities are excluded by default.
 
@@ -24,7 +24,7 @@ Returns a paginated, filtered list of courses. Disabled courses and courses belo
 | `university_name` | string | — | Partial match on university name |
 | `university_id` | string | — | Comma-separated university IDs |
 | `min_fee` | number | — | Minimum applicable tuition fee |
-| `max_fee` | number | — | Maximum applicable tuition fee |
+| `max_fee` | number | — | Maximum applicable tuition fee. If both `min_fee` and `max_fee` are set, courses are filtered to that range. If only `min_fee`, returns courses with fee ≥ `min_fee` |
 | `intake_month` | string | — | Month number `1–12`. Must be combined with `intake_year` |
 | `intake_year` | string | — | 4-digit year. Must be combined with `intake_month` |
 | `season` | string | — | `fall \| spring \| summer` |
@@ -39,86 +39,75 @@ Returns a paginated, filtered list of courses. Disabled courses and courses belo
 ```json
 {
   "status": "success",
-  "data": {
-    "data": [
-      {
-        "id": 1,
-        "name": "BSc Computer Science",
-        "universityId": 5,
-        "universityName": "MIT WPU",
-        "universityLogo": "https://cdn.example.com/logos/mitwpu.png",
-        "degreeLevel": "Bachelor",
-        "country": "India",
-        "city": "Pune",
-        "duration": 3,
-        "category": "Engineering",
-        "applicableTuitionFee": 8400,
-        "applicationFee": 0,
-        "depositFee": 0,
-        "registrationFee": 500,
-        "scholarshipAvailable": true,
-        "scholarshipType": "flat_automatic",
-        "scholarshipDetails": {
-          "percentageMin": 50,
-          "percentageMax": 50,
-          "description": "50% scholarship for all international students",
-          "appliesTo": "tuition_only",
-          "validForYears": "all_years",
-          "renewalCondition": null
+  "data": [
+    {
+      "id": 1,
+      "name": "BSc Computer Science",
+      "universityId": 5,
+      "universityName": "MIT WPU",
+      "universityLogo": "https://cdn.example.com/logos/mitwpu.png",
+      "degreeLevel": "Bachelor",
+      "country": "India",
+      "city": "Pune",
+      "duration": 3,
+      "category": "Engineering",
+      "applicableTuitionFee": 8400,
+      "applicationFee": 0,
+      "depositFee": 0,
+      "registrationFee": 500,
+      "scholarshipAvailable": true,
+      "scholarshipType": "flat_automatic",
+      "scholarshipDetails": {
+        "percentageMin": 50,
+        "percentageMax": 50,
+        "description": "50% scholarship for all international students",
+        "appliesTo": "tuition_only",
+        "validForYears": "all_years",
+        "renewalCondition": null
+      },
+      "currency": "USD",
+      "currencySymbol": "$",
+      "isPrime": true,
+      "upcomingIntakes": [
+        {
+          "id": 12,
+          "month": 9,
+          "year": 2025,
+          "season": "fall",
+          "label": "Fall 2025",
+          "status": "open",
+          "applicationDeadline": "2025-08-15"
         },
-        "currency": "USD",
-        "currencySymbol": "$",
-        "isPrime": true,
-        "upcomingIntakes": [
-          {
-            "id": 12,
-            "month": 9,
-            "year": 2025,
-            "season": "fall",
-            "label": "Fall 2025",
-            "status": "open",
-            "applicationDeadline": "2025-08-15"
-          },
-          {
-            "id": 18,
-            "month": 2,
-            "year": 2026,
-            "season": "spring",
-            "label": "Spring 2026",
-            "status": "yet_to_open",
-            "applicationDeadline": "2026-01-20"
-          },
-          {
-            "id": 24,
-            "month": 9,
-            "year": 2026,
-            "season": "fall",
-            "label": "Fall 2026",
-            "status": "yet_to_open",
-            "applicationDeadline": "2026-08-15"
-          }
-        ]
-      }
-    ],
-    "currentPage": 1,
-    "itemsPerPage": 12,
-    "totalItems": 170,
-    "totalPages": 15
-  }
+        {
+          "id": 18,
+          "month": 2,
+          "year": 2026,
+          "season": "spring",
+          "label": "Spring 2026",
+          "status": "yet_to_open",
+          "applicationDeadline": "2026-01-20"
+        }
+      ]
+    }
+  ],
+  "currentPage": 1,
+  "itemsPerPage": 12,
+  "totalItems": 170,
+  "totalPages": 15
 }
 ```
 
 **Field notes:**
 
-- `upcomingIntakes` — Up to 3 next upcoming intakes for this course. Only intakes with status `yet_to_open` or `open` and a future month/year are included, ordered by year and month ascending. Returns `[]` if none exist.
+- Pagination fields (`currentPage`, `itemsPerPage`, `totalItems`, `totalPages`) are at the **top level** alongside `data`, not nested inside it.
+- `upcomingIntakes` — Up to 3 next upcoming intakes with status `yet_to_open` or `open` and a future month/year, ordered by year/month ascending. Returns `[]` if none exist.
 - `scholarshipDetails` — `null` when `scholarshipAvailable` is `false`.
-- `effectiveTuitionFee` is not returned in the listing; compute it on the frontend using `applicableTuitionFee` and `scholarshipDetails.percentageMin/Max`.
 
 ---
 
-## GET `/api/courses/filters`
+## GET `/courses/filters`
 
-Returns available filter options for the course listing UI. Results are cached in-memory for 4 hours.
+Returns available filter options for the course listing UI. Results are cached in-memory (TTL ~4 hours).
 
 ### Response `200`
 
@@ -155,21 +144,25 @@ Returns available filter options for the course listing UI. Results are cached i
     ],
     "limit": [
       { "label": "12", "value": "12" },
-      { "label": "24", "value": "24" }
+      { "label": "24", "value": "24" },
+      { "label": "48", "value": "48" }
     ],
     "sort": [
       { "value": "", "label": "Default" },
-      { "value": "applicableTuitionFee", "label": "Fee: Low to High" }
+      { "value": "applicableTuitionFee,asc", "label": "Tuition Fee (Low to High)" },
+      { "value": "applicableTuitionFee,desc", "label": "Tuition Fee (High to Low)" }
     ]
   }
 }
 ```
 
+Only non-disabled courses and non-disabled universities appear in the filter values.
+
 ---
 
-## GET `/api/courses/search`
+## GET `/courses/search`
 
-Quick autocomplete search. Returns up to 8 matching courses.
+Quick autocomplete search. Returns up to 8 matching non-disabled courses.
 
 ### Query Parameters
 
@@ -193,15 +186,17 @@ Quick autocomplete search. Returns up to 8 matching courses.
 }
 ```
 
+Returns `[]` if `query` is blank.
+
 ### Error Responses
 
 | Status | Description |
 |--------|-------------|
-| `400` | `query` parameter is missing or not a string |
+| `400` | `query` parameter is not a string |
 
 ---
 
-## GET `/api/courses/:id`
+## GET `/courses/:id`
 
 Returns full details for a single course, including fee breakdown, scholarship details, and up to 3 upcoming intakes.
 
@@ -213,96 +208,98 @@ Returns full details for a single course, including fee breakdown, scholarship d
 
 ### Response `200`
 
+The response is the **raw course object** with no `status`/`data` wrapper.
+
 ```json
 {
-  "status": "success",
-  "data": {
-    "id": 1,
-    "name": "BSc Computer Science",
-    "universityId": 5,
-    "universityName": "MIT WPU",
-    "universityLogo": "https://cdn.example.com/logos/mitwpu.png",
-    "degreeLevel": "Bachelor",
-    "country": "India",
-    "city": "Pune",
-    "duration": 3,
-    "category": "Engineering",
-    "description": "A comprehensive undergraduate program in computer science...",
-    "language": "English",
-    "minimumLevelOfEducation": "12th Grade",
-    "minimumGPA": "60%",
-    "additionalRequirements": "IELTS 6.0 or equivalent",
-    "info": "Applications reviewed on a rolling basis.",
-    "tags": ["stem", "technology"],
-    "offerTime": "4-6 weeks",
-    "acronym": "BSc CS",
-    "applicableTuitionFee": 8400,
-    "applicationFee": 0,
-    "registrationFee": 500,
-    "depositFee": 0,
-    "examinationFee": 200,
-    "hostelFee": 1200,
-    "foodFee": 800,
-    "otherFees": [
-      { "name": "Library Fee", "amount": 100, "required": true, "frequency": "annual" }
-    ],
-    "scholarshipAvailable": true,
-    "scholarshipType": "flat_automatic",
-    "scholarshipDetails": {
-      "percentageMin": 50,
-      "percentageMax": 50,
-      "description": "50% scholarship for all international students",
-      "appliesTo": "tuition_only",
-      "validForYears": "all_years",
-      "renewalCondition": null,
-      "additionalNotes": null
+  "id": 1,
+  "name": "BSc Computer Science",
+  "universityId": 5,
+  "universityName": "MIT WPU",
+  "universityLogo": "https://cdn.example.com/logos/mitwpu.png",
+  "degreeLevel": "Bachelor",
+  "country": "India",
+  "city": "Pune",
+  "duration": 3,
+  "category": "Engineering",
+  "description": "A comprehensive undergraduate program in computer science...",
+  "language": "English",
+  "minimumLevelOfEducation": "12th Grade",
+  "minimumGPA": "60%",
+  "additionalRequirements": ["IELTS 6.0 or equivalent"],
+  "tags": ["stem", "technology"],
+  "offerTime": "4-6 weeks",
+  "acronym": "BSc CS",
+  "applicableTuitionFee": 8400,
+  "applicationFee": 0,
+  "registrationFee": 500,
+  "depositFee": 0,
+  "hostelFee": {
+    "amount": 1200,
+    "frequency": "annual",
+    "required": false,
+    "notes": null
+  },
+  "otherFees": [
+    { "name": "Library Fee", "amount": 100, "required": true, "frequency": "annual" }
+  ],
+  "scholarshipAvailable": true,
+  "scholarshipType": "flat_automatic",
+  "scholarshipDetails": {
+    "percentageMin": 50,
+    "percentageMax": 50,
+    "description": "50% scholarship for all international students",
+    "appliesTo": "tuition_only",
+    "validForYears": "all_years",
+    "renewalCondition": null,
+    "additionalNotes": null
+  },
+  "currency": "USD",
+  "currencySymbol": "$",
+  "isPrime": true,
+  "disabled": false,
+  "priority": 10,
+  "upcomingIntakes": [
+    {
+      "id": 12,
+      "month": 9,
+      "year": 2025,
+      "season": "fall",
+      "label": "Fall 2025",
+      "status": "open",
+      "statusNote": null,
+      "applicationDeadline": "2025-08-15",
+      "documentDeadline": "2025-08-30",
+      "startDate": "2025-09-01",
+      "applicationsCount": 14,
+      "maxCapacity": 100
     },
-    "currency": "USD",
-    "currencySymbol": "$",
-    "isPrime": true,
-    "disabled": false,
-    "priority": 10,
-    "upcomingIntakes": [
-      {
-        "id": 12,
-        "month": 9,
-        "year": 2025,
-        "season": "fall",
-        "label": "Fall 2025",
-        "status": "open",
-        "statusNote": null,
-        "applicationDeadline": "2025-08-15",
-        "documentDeadline": "2025-08-30",
-        "startDate": "2025-09-01",
-        "applicationsCount": 14,
-        "maxCapacity": 100
-      },
-      {
-        "id": 18,
-        "month": 2,
-        "year": 2026,
-        "season": "spring",
-        "label": "Spring 2026",
-        "status": "yet_to_open",
-        "statusNote": null,
-        "applicationDeadline": "2026-01-20",
-        "documentDeadline": "2026-02-01",
-        "startDate": "2026-02-15",
-        "applicationsCount": 0,
-        "maxCapacity": 100
-      }
-    ]
-  }
+    {
+      "id": 18,
+      "month": 2,
+      "year": 2026,
+      "season": "spring",
+      "label": "Spring 2026",
+      "status": "yet_to_open",
+      "statusNote": null,
+      "applicationDeadline": "2026-01-20",
+      "documentDeadline": "2026-02-01",
+      "startDate": "2026-02-15",
+      "applicationsCount": 0,
+      "maxCapacity": 100
+    }
+  ]
 }
 ```
 
 **Field notes:**
 
-- `upcomingIntakes` — Up to 3 upcoming intakes with status `yet_to_open` or `open` and a future month/year, ordered by year/month ascending. Returns `[]` if none exist. Filtered and limited at the DB level.
+- No `status`/`data` wrapper — the course object is returned directly.
+- `upcomingIntakes` — Up to 3 upcoming intakes with status `yet_to_open` or `open` and a future month/year, ordered by year/month ascending. Returns `[]` if none exist.
 - Detail response includes the full intake shape (`statusNote`, `documentDeadline`, `startDate`, `applicationsCount`, `maxCapacity`), unlike the listing which only includes summary fields.
-- `applicationsCount` / `maxCapacity` — Use to compute availability (`maxCapacity - applicationsCount`). `maxCapacity` is `null` when capacity is unlimited.
-- `otherFees` — Array of additional fees; `[]` if none.
-- `hostelFee`, `foodFee`, `examinationFee` — `null` if not set by the university.
+- `maxCapacity` is `null` when capacity is unlimited.
+- `otherFees` — `[]` if none.
+- `hostelFee` — `null` if not set.
 - `scholarshipDetails` — `null` when `scholarshipAvailable` is `false`.
 
 ### Error Responses

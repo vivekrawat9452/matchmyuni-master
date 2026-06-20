@@ -7,6 +7,7 @@ import type {
   CoursesQueryParams,
   CourseFiltersDto,
   CourseListItem,
+  CourseSearchResult,
   FilterOption,
   UniversityDto,
   EventDto,
@@ -104,6 +105,7 @@ export async function getCourseById(id: number): Promise<CourseListItem | null> 
     const course = parseCourseDetailResponse(res.data);
     console.log(COURSE_DETAIL_LOG, 'response', {
       httpStatus: res.status,
+      data: res.data,
       id,
       found: course != null,
       name: course?.name,
@@ -120,8 +122,26 @@ export async function getCourseById(id: number): Promise<CourseListItem | null> 
   }
 }
 
-export async function searchCourses(search: string) {
-  return getCourses({search, limit: 20});
+const COURSE_SEARCH_LOG = '[GET /courses/search]';
+
+/** GET /courses/search — quick autocomplete (up to 8 courses). */
+export async function searchCourses(query: string): Promise<CourseSearchResult[]> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return [];
+  }
+  console.log(COURSE_SEARCH_LOG, 'request', {query: trimmed});
+  try {
+    const {data} = await apiClient.get<ApiEnvelope<CourseSearchResult[]>>('/courses/search', {
+      params: {query: trimmed},
+    });
+    const results = asArray(unwrapEnvelope(data));
+    console.log(COURSE_SEARCH_LOG, 'response', {count: results.length});
+    return results;
+  } catch (err) {
+    console.error(COURSE_SEARCH_LOG, 'failed', {query: trimmed, err});
+    return [];
+  }
 }
 
 /** Map string[] or FilterOption[] to FilterOption[]. */
