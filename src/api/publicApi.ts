@@ -15,9 +15,18 @@ import type {
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 
+const HEALTH_LOG = '[GET /health]';
+
 export async function getHealth() {
-  const {data} = await apiClient.get<{status: string; uptime?: number}>('/health');
-  return data;
+  console.log(HEALTH_LOG, 'request');
+  try {
+    const {data} = await apiClient.get<{status: string; uptime?: number}>('/health');
+    console.log(HEALTH_LOG, 'response', {status: data.status, uptime: data.uptime});
+    return data;
+  } catch (err) {
+    console.error(HEALTH_LOG, 'failed', err);
+    throw err;
+  }
 }
 
 // ─── Courses ──────────────────────────────────────────────────────────────────
@@ -206,9 +215,14 @@ export async function getUniversityById(id: number) {
 
 // ─── Countries ────────────────────────────────────────────────────────────────
 
+const GET_COUNTRIES_LOG = '[GET countries — onboarding picker]';
+
 /** Onboarding country pickers — REST Countries v5 with bundled fallback. */
 export async function getCountries() {
-  return fetchRestCountriesWithFallback();
+  console.log(GET_COUNTRIES_LOG, 'request');
+  const countries = await fetchRestCountriesWithFallback();
+  console.log(GET_COUNTRIES_LOG, 'response', {count: countries.length});
+  return countries;
 }
 
 export async function getCountryById(id: number) {

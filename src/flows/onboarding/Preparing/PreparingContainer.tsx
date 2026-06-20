@@ -19,11 +19,57 @@ const BUDGET_KEY = 'mm_budget_tier';
 /** Minimum time on preparing UI before entering app + tutorial */
 const PREPARING_MIN_MS = 2500;
 
+const STUDY_CHIP_META: Record<string, {emoji: string; label: string}> = {
+  business: {emoji: '💼', label: 'Business'},
+  engineering: {emoji: '⚙️', label: 'Engineering'},
+  medicine: {emoji: '🩺', label: 'Medicine'},
+  law: {emoji: '⚖️', label: 'Law'},
+  cs: {emoji: '💻', label: 'Computer Sci.'},
+  arts: {emoji: '🎨', label: 'Arts & Design'},
+  arch: {emoji: '🏛️', label: 'Architecture'},
+  psych: {emoji: '🧠', label: 'Psychology'},
+  finance: {emoji: '📊', label: 'Finance'},
+  edu: {emoji: '📚', label: 'Education'},
+  science: {emoji: '🔬', label: 'Sciences'},
+  media: {emoji: '🎬', label: 'Media'},
+};
+
+function buildPreferenceChips(
+  draft: ReturnType<typeof useOnboardingStore.getState>,
+  countries: Awaited<ReturnType<typeof getStudyDestinationCountries>>,
+): string[] {
+  const idToCountry = new Map(countries.map(c => [c.id, c] as const));
+  const chips: string[] = [];
+
+  for (const id of draft.countryIds) {
+    const country = idToCountry.get(id);
+    if (country) {
+      chips.push(`${country.flag ?? '🌍'}  ${country.name}`);
+      break;
+    }
+  }
+
+  for (const tag of draft.studyTags) {
+    const meta = STUDY_CHIP_META[tag];
+    if (meta) {
+      chips.push(`${meta.emoji}  ${meta.label}`);
+      break;
+    }
+  }
+
+  if (draft.budgetTier) {
+    chips.push(draft.budgetTier);
+  }
+
+  return chips;
+}
+
 export function PreparingContainer() {
   const navigation = useNavigation();
   const setSession = useAuthStore(s => s.setSession);
   const resetOnboarding = useOnboardingStore(s => s.reset);
   const [msg, setMsg] = useState<string | undefined>(undefined);
+  const [chips, setChips] = useState<string[]>([]);
   const ran = useRef(false);
   const mountedAt = useRef(Date.now());
 
@@ -53,17 +99,16 @@ export function PreparingContainer() {
       try {
         setMsg('Verifying service…');
         const draft = useOnboardingStore.getState();
+        const countries = await getStudyDestinationCountries();
+        setChips(buildPreferenceChips(draft, countries));
 
         // Health check is optional — never block signup on it
         try {
           await getHealth();
-        } catch(e) {
+        } catch (e) {
           console.log('error_001', e);
-
           /* non-critical */
         }
-
-        const countries = await getStudyDestinationCountries();
 
         const prefsPayload = buildPreferencesFromOnboarding(draft, countries);
         if (!prefsPayload) {
@@ -130,5 +175,5 @@ export function PreparingContainer() {
     })();
   }, [handleError, resetOnboarding, setSession]);
 
-  return <PreparingScreen message={msg} />;
+  return <PreparingScreen message={msg} chips={chips} />;
 }

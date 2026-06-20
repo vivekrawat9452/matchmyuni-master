@@ -3,9 +3,29 @@ import {saveRecommendationPreferences} from './recommendationApi';
 import type {RecommendationPreferencesPayload} from './recommendationTypes';
 import type {ApiEnvelope, LoginPayload, SignupPayload, SignupResponse, UserDto} from './types';
 
+const POST_SIGNUP_LOG = '[POST /auth/signup]';
+const POST_SIGNUP_PREFS_LOG = '[POST /auth/signup + PUT /recommendations/preferences]';
+
 export async function postSignup(body: SignupPayload) {
-  const {data} = await apiClient.post<ApiEnvelope<SignupResponse>>('/auth/signup', body);
-  return data.data;
+  console.log(POST_SIGNUP_LOG, 'request', {
+    email: body.email,
+    firstName: body.firstName,
+    lastName: body.lastName,
+    country: body.country,
+    countryCode: body.countryCode,
+    contact: body.contact,
+  });
+  try {
+    const {data} = await apiClient.post<ApiEnvelope<SignupResponse>>('/auth/signup', body);
+    console.log(POST_SIGNUP_LOG, 'response', {
+      userId: data.data?.user?.id,
+      hasSession: Boolean(data.data?.session?.access_token),
+    });
+    return data.data;
+  } catch (err) {
+    console.error(POST_SIGNUP_LOG, 'failed', {email: body.email, err});
+    throw err;
+  }
 }
 
 /**
@@ -15,10 +35,21 @@ export async function postSignupWithPreferences(
   signupBody: SignupPayload,
   preferences: RecommendationPreferencesPayload,
 ) {
+  console.log(POST_SIGNUP_PREFS_LOG, 'request', {
+    email: signupBody.email,
+    preferredCategories: preferences.preferredCategories,
+    preferredCountries: preferences.preferredCountries,
+    budget: preferences.budget,
+    intendedStart: preferences.intendedStart,
+  });
   const {user, session} = await postSignup(signupBody);
   const accessToken = session.access_token;
   await setStoredToken(accessToken);
   await saveRecommendationPreferences(preferences, {accessToken});
+  console.log(POST_SIGNUP_PREFS_LOG, 'response', {
+    userId: user?.id,
+    preferencesSaved: true,
+  });
   return {user, session};
 }
 

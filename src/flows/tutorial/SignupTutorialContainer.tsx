@@ -13,7 +13,7 @@ import {
 } from './tutorialConstants';
 import type {AppStackList} from '../../navigation/AppStackNavigator';
 
-/** First two Figma frames — swipe tutorials only (645:3705, 645:4064). */
+/** Figma 645:3705, 645:4064 — full-screen swipe tutorial frames. */
 const SLIDE_STEPS = TUTORIAL_STEPS.slice(0, 2);
 
 type Phase = 'slides' | 'recommended';
@@ -30,7 +30,8 @@ export function SignupTutorialContainer() {
     useNavigation<NativeStackNavigationProp<AppStackList>>();
   const [phase, setPhase] = useState<Phase>('slides');
   const [slideIndex, setSlideIndex] = useState(0);
-  const [recStep, setRecStep] = useState<2 | 3>(2);
+  const [recPhase, setRecPhase] = useState<'overlay' | 'interactive'>('overlay');
+  const [overlayIndex, setOverlayIndex] = useState(0);
   const [exiting, setExiting] = useState(false);
 
   const {data: discoverData, isLoading: discoverLoading} = useQuery({
@@ -48,6 +49,17 @@ export function SignupTutorialContainer() {
     return map;
   }, [discoverData?.results]);
 
+  const whyMatchByCourseId = useMemo(() => {
+    const map: Record<number, string[]> = {};
+    discoverData?.results?.forEach(r => {
+      if (r.whyMatch?.length) {
+        const id = r.course.id ?? r.courseId;
+        map[id] = r.whyMatch;
+      }
+    });
+    return map;
+  }, [discoverData?.results]);
+
   const courses = useMemo(
     () =>
       (discoverData?.results ?? []).map(r => ({
@@ -59,7 +71,8 @@ export function SignupTutorialContainer() {
 
   const showRecommended = useCallback(() => {
     setPhase('recommended');
-    setRecStep(2);
+    setRecPhase('overlay');
+    setOverlayIndex(0);
   }, []);
 
   const finishToDiscover = useCallback(async () => {
@@ -91,8 +104,12 @@ export function SignupTutorialContainer() {
     showRecommended();
   }, [showRecommended]);
 
-  const onRecDone = useCallback(() => {
-    setRecStep(3);
+  const onOverlayNext = useCallback(() => {
+    setOverlayIndex(i => Math.min(i + 1, 2));
+  }, []);
+
+  const onOverlaySkip = useCallback(() => {
+    setRecPhase('interactive');
   }, []);
 
   const onGoHome = useCallback(() => {
@@ -102,11 +119,14 @@ export function SignupTutorialContainer() {
   if (phase === 'recommended') {
     return (
       <SignupTutorialRecommendedScreen
-        step={recStep}
+        phase={recPhase}
+        overlayIndex={overlayIndex}
         loading={discoverLoading}
         courses={courses}
         matchByCourseId={matchByCourseId}
-        onDone={onRecDone}
+        whyMatchByCourseId={whyMatchByCourseId}
+        onOverlayNext={onOverlayNext}
+        onOverlaySkip={onOverlaySkip}
         onGoHome={onGoHome}
       />
     );

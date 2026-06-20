@@ -113,6 +113,7 @@ export const en = {
   preparing: {
     headline: 'Find universities that fit your profile',
     sub: 'Takes less than a minute.',
+    comparing: 'Comparing matches…',
   },
   signupTutorial: {
     recommended: 'Recommended',

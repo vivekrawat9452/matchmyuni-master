@@ -57,11 +57,19 @@ function filtersToCountryDtos(
  * Study-destination countries for onboarding LocationSelect.
  * Names must match allowedCountries on PUT /recommendations/preferences.
  */
+const STUDY_DESTINATION_COUNTRIES_LOG = '[GET study destination countries]';
+
 export async function getStudyDestinationCountries(): Promise<CountryDto[]> {
+  console.log(STUDY_DESTINATION_COUNTRIES_LOG, 'request');
   try {
     const filters = await getCourseFilters();
     if (filters.countries.length > 0) {
-      return filtersToCountryDtos(filters.countries);
+      const countries = filtersToCountryDtos(filters.countries);
+      console.log(STUDY_DESTINATION_COUNTRIES_LOG, 'response', {
+        source: 'courses/filters',
+        count: countries.length,
+      });
+      return countries;
     }
   } catch (error) {
     if (__DEV__) {
@@ -71,5 +79,9 @@ export async function getStudyDestinationCountries(): Promise<CountryDto[]> {
       );
     }
   }
+  console.log(STUDY_DESTINATION_COUNTRIES_LOG, 'response', {
+    source: 'fallback',
+    count: FALLBACK_STUDY_DESTINATIONS.length,
+  });
   return FALLBACK_STUDY_DESTINATIONS;
 }

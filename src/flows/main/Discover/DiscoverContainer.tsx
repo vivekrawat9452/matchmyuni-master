@@ -18,31 +18,15 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  Image,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from 'react-native-gesture-handler';
-import Animated, {
-  Extrapolation,
-  interpolate,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
-import LinearGradient from 'react-native-linear-gradient';
-import {Check, Heart, Info, SlidersHorizontal, X} from 'lucide-react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SlidersHorizontal, X} from 'lucide-react-native';
 import {useFocusEffect, useIsFocused, useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useQuery, useQueryClient} from '@tanstack/react-query';
@@ -52,7 +36,7 @@ import {getDiscoverRecommendations} from '../../../api/recommendationApi';
 import {getCourseFilters, getCourses} from '../../../api/publicApi';
 import {colors} from '../../../utils/colors';
 import {FontSizes, Weights, Styles} from '../../../utils';
-import {hPad, rad} from '../../../utils/sizes';
+import {rad} from '../../../utils/sizes';
 import {
   addToShortlist,
   getShortlist,
@@ -61,16 +45,16 @@ import {
 import type {CourseListItem, FilterOption} from '../../../api/types';
 import type {AppStackList} from '../../../navigation/AppStackNavigator';
 import {
-  DiscoverCourseCard,
-  DISCOVER_CARD_H as CARD_H,
-  DISCOVER_CARD_W as CARD_W,
-} from './DiscoverCourseCard';
+  DiscoverCardTutorialOverlay,
+  DiscoverDeckActions,
+  discoverDeckStyles,
+  H_PAD,
+  PrevCardsPeek,
+  SwipeCard,
+} from './DiscoverSwipeDeck';
 
-const {width: W, height: H} = Dimensions.get('window');
-const H_PAD = hPad(5);
-
-const SWIPE_THRESHOLD = W * 0.28;
-const TUTORIAL_KEY    = 'discover_tutorial_seen_v2';
+const {height: H} = Dimensions.get('window');
+const TUTORIAL_KEY = 'discover_tutorial_seen_v2';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type ActiveFilters = {
@@ -82,87 +66,25 @@ type ActiveFilters = {
   sort?: string;
 };
 
-// ─── Tutorial ──────────────────────────────────────────────────────────────────
-const SLIDES = [
-  {emoji: '👉', text: 'Right swipe to add in recommendation\nand also shortlisted'},
-  {emoji: '👈', text: 'Left swipe to remove from recommendation'},
-  {emoji: '👆', text: 'On click to view course detail page'},
-];
-
-function TutorialOverlay({onDone}: {onDone: () => void}) {
+function DiscoverTutorialOverlay({onDone}: {onDone: () => void}) {
   const [slide, setSlide] = useState(0);
-  const isLast = slide === SLIDES.length - 1;
 
-  const handlePrimary = useCallback(() => {
-    if (isLast) {
+  const handleNext = useCallback(() => {
+    if (slide >= 2) {
       onDone();
-    } else {
-      setSlide(s => s + 1);
+      return;
     }
-  }, [isLast, onDone]);
+    setSlide(s => s + 1);
+  }, [onDone, slide]);
 
   return (
-    <View style={tut.wrap} pointerEvents="auto" collapsable={false}>
-      <View style={tut.iconCircle}>
-        <Text style={tut.emoji}>{SLIDES[slide].emoji}</Text>
-      </View>
-      <Text style={tut.text}>{SLIDES[slide].text}</Text>
-      <TouchableOpacity
-        style={tut.btn}
-        activeOpacity={0.85}
-        onPress={handlePrimary}
-        accessibilityRole="button"
-        accessibilityLabel={isLast ? 'Done' : 'Next'}>
-        <Text style={tut.btnLabel}>{isLast ? 'Done' : 'Next'}</Text>
-      </TouchableOpacity>
-      {!isLast ? (
-        <TouchableOpacity onPress={onDone} hitSlop={16} accessibilityRole="button" accessibilityLabel="Skip">
-          <Text style={tut.skip}>Skip</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
+    <DiscoverCardTutorialOverlay
+      slideIndex={slide}
+      onNext={handleNext}
+      onSkip={onDone}
+    />
   );
 }
-
-const tut = StyleSheet.create({
-  wrap: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15,22,44,0.82)',
-    borderRadius: rad.xl + 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 18,
-    paddingHorizontal: 32,
-    zIndex: 30,
-  },
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emoji: {fontSize: 32},
-  text: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.white,
-    textAlign: 'center',
-    lineHeight: 26,
-  },
-  btn: {
-    backgroundColor: colors.white,
-    borderRadius: rad.full,
-    paddingHorizontal: 52,
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  btnLabel: {fontSize: 16, fontWeight: '800', color: colors.navy},
-  skip: {fontSize: 15, fontWeight: '500', color: 'rgba(255,255,255,0.65)'},
-});
 
 // ─── Filter Sheet ──────────────────────────────────────────────────────────────
 
@@ -373,222 +295,6 @@ const fs = StyleSheet.create({
     justifyContent: 'center',
   },
   applyLabel: {fontSize: 15, fontWeight: '800', color: colors.white},
-});
-
-// ─── Prev Cards Peek ───────────────────────────────────────────────────────────
-
-function PrevCardsPeek({cards}: {cards: CourseListItem[]}) {
-  if (cards.length === 0) return null;
-  return (
-    <View style={pk.row}>
-      {cards.map((c, i) => (
-        <View
-          key={`${c.id}-${i}`}
-          style={[pk.thumb, {opacity: 1 - i * 0.25, transform: [{scale: 1 - i * 0.06}]}]}>
-          {c.universityLogo ? (
-            <Image source={{uri: c.universityLogo}} style={pk.img} resizeMode="cover" />
-          ) : (
-            <View style={pk.fallback}>
-              <Text style={pk.initial}>{c.universityName?.charAt(0) ?? 'U'}</Text>
-            </View>
-          )}
-          <View style={pk.overlay} />
-        </View>
-      ))}
-      <Text style={pk.label} numberOfLines={1}>
-        {cards[0].name}
-      </Text>
-    </View>
-  );
-}
-
-const pk = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: H_PAD,
-    paddingVertical: 8,
-    gap: 6,
-  },
-  thumb: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.inputBg,
-  },
-  img: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0},
-  fallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.inputBg,
-  },
-  initial: {fontSize: 14, fontWeight: '800', color: colors.navy, opacity: 0.4},
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
-  label: {
-    flex: 1,
-    fontSize: 11,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    marginLeft: 4,
-  },
-});
-
-// ─── Swipe Card ────────────────────────────────────────────────────────────────
-
-type CardProps = {
-  course: CourseListItem;
-  matchPct: number;
-  isTop: boolean;
-  stackIndex: number;
-  gesturesEnabled: boolean;
-  onSwipeRight: (c: CourseListItem) => void;
-  onSwipeLeft: (c: CourseListItem) => void;
-  onTap: (c: CourseListItem) => void;
-};
-
-function SwipeCard({
-  course,
-  matchPct,
-  isTop,
-  stackIndex,
-  gesturesEnabled,
-  onSwipeRight,
-  onSwipeLeft,
-  onTap,
-}: CardProps) {
-  const tx     = useSharedValue(0);
-  const ty     = useSharedValue(0);
-  const rot    = useSharedValue(0);
-  const swiped = useSharedValue(false);
-
-  const doRight = useCallback(() => onSwipeRight(course), [onSwipeRight, course]);
-  const doLeft  = useCallback(() => onSwipeLeft(course),  [onSwipeLeft, course]);
-  const doTap   = useCallback(() => onTap(course),        [onTap, course]);
-
-  const pan = Gesture.Pan()
-    .enabled(isTop && gesturesEnabled)
-    .onUpdate(e => {
-      if (swiped.value) return;
-      tx.value  = e.translationX;
-      ty.value  = e.translationY * 0.2;
-      rot.value = (e.translationX / W) * 16;
-    })
-    .onEnd(e => {
-      if (swiped.value) return;
-      const goRight = e.translationX > SWIPE_THRESHOLD || e.velocityX > 900;
-      const goLeft  = e.translationX < -SWIPE_THRESHOLD || e.velocityX < -900;
-      if (goRight) {
-        swiped.value = true;
-        tx.value  = withTiming(W * 1.6, {duration: 300});
-        rot.value = withTiming(25, {duration: 300});
-        runOnJS(doRight)();
-      } else if (goLeft) {
-        swiped.value = true;
-        tx.value  = withTiming(-W * 1.6, {duration: 300});
-        rot.value = withTiming(-25, {duration: 300});
-        runOnJS(doLeft)();
-      } else {
-        tx.value  = withSpring(0, {damping: 18, stiffness: 200});
-        ty.value  = withSpring(0, {damping: 18, stiffness: 200});
-        rot.value = withSpring(0, {damping: 18, stiffness: 200});
-      }
-    });
-
-  const tapG = Gesture.Tap()
-    .enabled(isTop && gesturesEnabled)
-    .maxDuration(200)
-    .onEnd(() => runOnJS(doTap)());
-
-  const composed = Gesture.Simultaneous(pan, tapG);
-
-  const scaleBack = 1 - stackIndex * 0.035;
-  const tyBack    = -stackIndex * 16;
-
-  const cardStyle = useAnimatedStyle(() => {
-    if (!isTop) {
-      return {transform: [{scale: scaleBack}, {translateY: tyBack}]};
-    }
-    return {
-      transform: [
-        {translateX: tx.value},
-        {translateY: ty.value},
-        {rotate: `${rot.value}deg`},
-      ],
-    };
-  });
-
-  const rightOpacity = useAnimatedStyle(() => ({
-    opacity: isTop
-      ? interpolate(tx.value, [0, SWIPE_THRESHOLD], [0, 1], Extrapolation.CLAMP)
-      : 0,
-  }));
-  const leftOpacity = useAnimatedStyle(() => ({
-    opacity: isTop
-      ? interpolate(tx.value, [0, -SWIPE_THRESHOLD], [0, 1], Extrapolation.CLAMP)
-      : 0,
-  }));
-
-  return (
-    <GestureDetector gesture={composed}>
-      <Animated.View style={[cs.cardWrap, cardStyle]}>
-        <DiscoverCourseCard
-          course={course}
-          matchPct={matchPct}
-          onViewDetail={doTap}
-        />
-
-        <Animated.View style={[cs.swipeOverlay, rightOpacity]} pointerEvents="none">
-          <LinearGradient
-            colors={['rgba(22,163,74,0.55)', 'rgba(22,163,74,0.55)']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[cs.swipeCircle, {backgroundColor: '#16A34A'}]}>
-            <Check size={38} color={colors.white} strokeWidth={3} />
-          </View>
-        </Animated.View>
-
-        <Animated.View style={[cs.swipeOverlay, leftOpacity]} pointerEvents="none">
-          <LinearGradient
-            colors={['rgba(220,38,38,0.55)', 'rgba(220,38,38,0.55)']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[cs.swipeCircle, {backgroundColor: '#DC2626'}]}>
-            <X size={38} color={colors.white} strokeWidth={3} />
-          </View>
-        </Animated.View>
-      </Animated.View>
-    </GestureDetector>
-  );
-}
-
-const cs = StyleSheet.create({
-  cardWrap: {
-    position: 'absolute',
-    width: CARD_W,
-    height: CARD_H,
-    borderRadius: rad.xl,
-    overflow: 'hidden',
-  },
-  swipeOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: rad.xl,
-  },
-  swipeCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });
 
 // ─── Main Container ─────────────────────────────────────────────────────────────
@@ -917,38 +623,20 @@ export function DiscoverContainer() {
           )}
           {showTutorial && visibleCourses.length > 0 && !isLoading ? (
             <View style={styles.deckTutorial} pointerEvents="box-none">
-              <TutorialOverlay onDone={dismissTutorial} />
+              <DiscoverTutorialOverlay onDone={dismissTutorial} />
             </View>
           ) : null}
         </View>
 
-        {/* ── Action buttons (Figma 407-4965) ───────────────────────────── */}
         {topCourse && !isLoading ? (
-          <View style={[styles.actionsRow, {paddingBottom: insets.bottom + 8}]}>
-            <View style={styles.actionsButtons}>
-              <Pressable
-                style={styles.actionReject}
-                onPress={() => onSwipeLeft(topCourse)}
-                accessibilityLabel="Pass">
-                <X size={28} color="#DC2626" strokeWidth={2.5} />
-              </Pressable>
-              <Pressable
-                style={styles.actionInfo}
-                onPress={() => onTap(topCourse)}
-                accessibilityLabel="Course details">
-                <Info size={22} color={colors.textSecondary} strokeWidth={2} />
-              </Pressable>
-              <Pressable
-                style={styles.actionLike}
-                onPress={() => onSwipeRight(topCourse)}
-                accessibilityLabel="Shortlist">
-                <Heart size={30} color={colors.white} fill={colors.white} />
-              </Pressable>
-            </View>
-            <Text style={styles.countText}>
-              {remaining} course{remaining !== 1 ? 's' : ''} left
-            </Text>
-          </View>
+          <DiscoverDeckActions
+            topCourse={topCourse}
+            remaining={remaining}
+            bottomInset={insets.bottom}
+            onSwipeLeft={onSwipeLeft}
+            onSwipeRight={onSwipeRight}
+            onTap={onTap}
+          />
         ) : null}
       </View>
 
@@ -1038,14 +726,8 @@ const styles = StyleSheet.create({
   clearAllText: {fontSize: FontSizes.caption, fontWeight: Weights.semibold, color: colors.textSecondary},
 
   // Deck
-  deckArea: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  deckTutorial: {
-    position: 'absolute',
-    width: CARD_W,
-    height: CARD_H,
-    zIndex: 50,
-    elevation: 50,
-  },
+  deckArea: discoverDeckStyles.deckArea,
+  deckTutorial: discoverDeckStyles.deckTutorial,
   empty: {alignItems: 'center', gap: 10, paddingHorizontal: 32},
   emptyTitle: {fontSize: FontSizes.large, fontWeight: Weights.bold, color: colors.navy, textAlign: 'center'},
   emptySub: {
@@ -1062,55 +744,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   resetLabel: {fontSize: FontSizes.small, fontWeight: Weights.bold, color: colors.white},
-
-  actionsRow: {
-    alignItems: 'center',
-    paddingTop: 10,
-    gap: 8,
-  },
-  actionsButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
-    paddingHorizontal: H_PAD,
-  },
-  actionReject: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionInfo: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionLike: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  countText: {
-    fontSize: FontSizes.caption,
-    color: colors.textSecondary,
-    fontWeight: Weights.medium,
-  },
 });

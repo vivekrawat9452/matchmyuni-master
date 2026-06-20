@@ -1,67 +1,234 @@
 /**
  * Post-signup tutorial — recommended courses (Figma 645:4423 → 645:3349).
- * Live course data from GET /recommendations/discover with tutorial overlays.
+ * Live discover deck with swipe/shortlist parity to DiscoverContainer.
  */
-import React from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {
-  View,
-  ImageBackground,
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
-  ActivityIndicator,
+  View,
 } from 'react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {colors} from '../../utils/colors';
 import {FontSizes, Weights} from '../../utils';
 import {en} from '../../utils/strings/en';
 import type {CourseListItem} from '../../api/types';
 import {
-  DiscoverCourseCard,
-  DISCOVER_CARD_H,
-  DISCOVER_CARD_W,
-  DISCOVER_SIDE_PAD,
-} from '../main/Discover/DiscoverCourseCard';
+  addToShortlist,
+  getShortlist,
+  resolveCourseId,
+} from '../../api/shortlistApi';
+import type {AppStackList} from '../../navigation/AppStackNavigator';
+import {
+  DiscoverCardTutorialOverlay,
+  DiscoverDeckActions,
+  discoverDeckStyles,
+  PrevCardsPeek,
+  SwipeCard,
+} from '../main/Discover/DiscoverSwipeDeck';
 
-export type RecommendedTutorialStep = 2 | 3;
+export type RecommendedTutorialPhase = 'overlay' | 'interactive';
+
+const SIGNUP_TUTORIAL_SLIDES = [
+  {emoji: '👉', text: en.signupTutorial.rightSwipe},
+  {emoji: '👈', text: en.signupTutorial.leftSwipe},
+  {emoji: '👆', text: en.signupTutorial.tapDetail},
+] as const;
 
 type Props = {
-  step: RecommendedTutorialStep;
+  phase: RecommendedTutorialPhase;
+  overlayIndex: number;
   loading: boolean;
   courses: CourseListItem[];
   matchByCourseId: Record<number, number>;
-  onDone: () => void;
+  whyMatchByCourseId: Record<number, string[]>;
+  onOverlayNext: () => void;
+  onOverlaySkip: () => void;
   onGoHome: () => void;
 };
 
 export function SignupTutorialRecommendedScreen({
-  step,
+  phase,
+  overlayIndex,
   loading,
   courses,
   matchByCourseId,
-  onDone,
+  whyMatchByCourseId,
+  onOverlayNext,
+  onOverlaySkip,
   onGoHome,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const footPad = Math.max(insets.bottom, 16);
-  const topCourse = courses[0];
-  const matchPct = topCourse
-    ? (matchByCourseId[topCourse.id] ?? 88)
-    : 88;
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackList>>();
+  const queryClient = useQueryClient();
+  const [cardIndex, setCardIndex] = useState(0);
+  const [prevCards, setPrevCards] = useState<CourseListItem[]>([]);
+
+  const {data: shortlist} = useQuery({
+    queryKey: ['shortlist'],
+    queryFn: getShortlist,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const shortlistedIds = useMemo(
+    () =>
+      new Set(
+        (shortlist ?? [])
+          .map(c => resolveCourseId(c))
+          .filter((id): id is number => id != null),
+      ),
+    [shortlist],
+  );
+
+  const visibleCourses = courses.slice(cardIndex, cardIndex + 3);
+  const total = courses.length;
+  const remaining = Math.max(0, total - cardIndex);
+  const topCourse = visibleCourses[0];
+  const showOverlay = phase === 'overlay' && visibleCourses.length > 0 && !loading;
+  const gesturesEnabled = phase === 'interactive';
+
+  const onSwipeRight = useCallback(
+    (c: CourseListItem) => {
+      const courseId = resolveCourseId(c);
+      if (courseId && !shortlistedIds.has(courseId)) {
+        const entry = {...c, id: courseId};
+        queryClient.setQueryData<CourseListItem[]>(['shortlist'], prev => {
+          const list = prev ?? [];
+          if (list.some(item => item.id === courseId)) {
+            return list;
+          }
+          return [entry, ...list];
+        });
+        void addToShortlist(courseId, entry)
+          .then(() => {
+            queryClient.invalidateQueries({queryKey: ['shortlist']});
+          })
+          .catch(() => {
+            queryClient.invalidateQueries({queryKey: ['shortlist']});
+          });
+      }
+      setPrevCards(prev => [c, ...prev].slice(0, 3));
+      setCardIndex(i => i + 1);
+    },
+    [queryClient, shortlistedIds],
+  );
+
+  const onSwipeLeft = useCallback((c: CourseListItem) => {
+    setPrevCards(prev => [c, ...prev].slice(0, 3));
+    setCardIndex(i => i + 1);
+  }, []);
+
+  const onTap = useCallback(
+    (c: CourseListItem) => {
+      const whyMatch = whyMatchByCourseId[c.id] ?? [];
+      navigation.navigate('CourseDetails', {
+        courseId: c.id,
+        matchPct: matchByCourseId[c.id] ?? 88,
+        courseData: JSON.stringify(c),
+        whyMatchData: JSON.stringify(whyMatch),
+      });
+    },
+    [matchByCourseId, navigation, whyMatchByCourseId],
+  );
+
+  const handleOverlayNext = useCallback(() => {
+    if (overlayIndex >= SIGNUP_TUTORIAL_SLIDES.length - 1) {
+      onOverlaySkip();
+      return;
+    }
+    onOverlayNext();
+  }, [onOverlayNext, onOverlaySkip, overlayIndex]);
 
   return (
-    <View style={styles.root}>
-      {step === 3 ? (
-        <>
-          <View style={styles.bg} pointerEvents="none">
-            <ImageBackground
-              source={require('../../../assets/profile/tutorial_step4_go_home.png')}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-              accessibilityLabel="Go to home tutorial"
-            />
-          </View>
-          <View style={[styles.footer, {paddingBottom: footPad}]}>
+    <GestureHandlerRootView style={styles.root}>
+      <View style={[styles.screen, {paddingTop: insets.top}]}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{en.signupTutorial.recommended}</Text>
+        </View>
+
+        <PrevCardsPeek cards={prevCards} />
+
+        <View style={discoverDeckStyles.deckArea}>
+          {loading ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : visibleCourses.length === 0 ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>No recommendations yet</Text>
+              <Text style={styles.emptySub}>
+                Complete your study preferences to see personalised matches.
+              </Text>
+              <Pressable
+                style={({pressed}) => [
+                  styles.emptyBtn,
+                  pressed && styles.emptyBtnPressed,
+                ]}
+                onPress={phase === 'overlay' ? onOverlaySkip : onGoHome}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  phase === 'overlay' ? en.signupTutorial.next : en.signupTutorial.goHome
+                }>
+                <Text style={styles.emptyBtnLabel}>
+                  {phase === 'overlay' ? en.signupTutorial.next : en.signupTutorial.goHome}
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            [...visibleCourses].reverse().map((c, revIdx) => {
+              const stackIndex = visibleCourses.length - 1 - revIdx;
+              const isTop = stackIndex === 0;
+              const matchPct =
+                matchByCourseId[c.id] ??
+                Math.max(60, 99 - cardIndex * 2 - stackIndex * 5);
+              return (
+                <SwipeCard
+                  key={`${c.id}-${cardIndex}`}
+                  course={c}
+                  matchPct={matchPct}
+                  isTop={isTop}
+                  stackIndex={stackIndex}
+                  gesturesEnabled={gesturesEnabled && !(isTop && showOverlay)}
+                  onSwipeRight={onSwipeRight}
+                  onSwipeLeft={onSwipeLeft}
+                  onTap={onTap}
+                />
+              );
+            })
+          )}
+
+          {showOverlay ? (
+            <View style={discoverDeckStyles.deckTutorial} pointerEvents="box-none">
+              <DiscoverCardTutorialOverlay
+                slideIndex={overlayIndex}
+                slides={SIGNUP_TUTORIAL_SLIDES}
+                nextLabel={en.signupTutorial.next}
+                doneLabel={en.signupTutorial.next}
+                skipLabel={en.signupTutorial.skip}
+                onNext={handleOverlayNext}
+                onSkip={onOverlaySkip}
+              />
+            </View>
+          ) : null}
+        </View>
+
+        {phase === 'interactive' && topCourse && !loading ? (
+          <DiscoverDeckActions
+            topCourse={topCourse}
+            remaining={remaining}
+            bottomInset={insets.bottom + 62}
+            onSwipeLeft={onSwipeLeft}
+            onSwipeRight={onSwipeRight}
+            onTap={onTap}
+          />
+        ) : null}
+
+        {phase === 'interactive' ? (
+          <View style={[styles.footer, {paddingBottom: insets.bottom + 8}]}>
             <Pressable
               style={({pressed}) => [
                 styles.goHomeBtn,
@@ -73,90 +240,15 @@ export function SignupTutorialRecommendedScreen({
               <Text style={styles.goHomeLabel}>{en.signupTutorial.goHome}</Text>
             </Pressable>
           </View>
-        </>
-      ) : (
-        <>
-          <View style={[styles.header, {paddingTop: insets.top + 8}]}>
-            <Text style={styles.title}>{en.signupTutorial.recommended}</Text>
-          </View>
-
-          <View style={styles.deck}>
-            {loading ? (
-              <ActivityIndicator size="large" color={colors.primary} />
-            ) : topCourse ? (
-              <>
-                {courses.slice(1, 3).map((c, i) => (
-                  <View
-                    key={c.id}
-                    style={[
-                      styles.backCard,
-                      {
-                        transform: [
-                          {scale: 0.965 - i * 0.035},
-                          {translateY: -(i + 1) * 16},
-                        ],
-                      },
-                    ]}
-                  />
-                ))}
-                <View style={styles.cardWrap}>
-                  <DiscoverCourseCard
-                    course={topCourse}
-                    matchPct={matchPct}
-                    width={DISCOVER_CARD_W}
-                    height={DISCOVER_CARD_H}
-                  />
-                </View>
-
-                <View style={styles.tapOverlay} pointerEvents="box-none">
-                  <View style={styles.tapIconCircle}>
-                    <Text style={styles.tapEmoji}>👆</Text>
-                  </View>
-                  <Text style={styles.tapText}>{en.signupTutorial.tapDetail}</Text>
-                  <Pressable
-                    style={({pressed}) => [
-                      styles.doneCompactBtn,
-                      pressed && styles.doneCompactBtnPressed,
-                    ]}
-                    onPress={onDone}
-                    accessibilityRole="button"
-                    accessibilityLabel={en.signupTutorial.done}>
-                    <Text style={styles.doneCompactLabel}>
-                      {en.signupTutorial.done}
-                    </Text>
-                  </Pressable>
-                </View>
-              </>
-            ) : (
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>No recommendations yet</Text>
-                <Text style={styles.emptySub}>
-                  Complete your study preferences to see personalised matches.
-                </Text>
-                <Pressable
-                  style={({pressed}) => [
-                    styles.doneCompactBtn,
-                    pressed && styles.doneCompactBtnPressed,
-                  ]}
-                  onPress={onDone}
-                  accessibilityRole="button"
-                  accessibilityLabel={en.signupTutorial.done}>
-                  <Text style={styles.doneCompactLabel}>
-                    {en.signupTutorial.done}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        </>
-      )}
-    </View>
+        ) : null}
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: colors.background},
-  bg: {...StyleSheet.absoluteFillObject},
+  screen: {flex: 1, backgroundColor: colors.background},
   header: {
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -168,69 +260,35 @@ const styles = StyleSheet.create({
     color: colors.navy,
     letterSpacing: -0.5,
   },
-  deck: {
-    flex: 1,
+  empty: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: DISCOVER_SIDE_PAD,
+    paddingHorizontal: 32,
+    gap: 8,
   },
-  backCard: {
-    position: 'absolute',
-    width: DISCOVER_CARD_W,
-    height: DISCOVER_CARD_H,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    opacity: 0.55,
-    shadowColor: colors.shadow,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  cardWrap: {
-    width: DISCOVER_CARD_W,
-    height: DISCOVER_CARD_H,
-    zIndex: 2,
-  },
-  tapOverlay: {
-    position: 'absolute',
-    width: DISCOVER_CARD_W,
-    height: DISCOVER_CARD_H,
-    backgroundColor: 'rgba(15,22,44,0.82)',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    paddingHorizontal: 28,
-    zIndex: 10,
-  },
-  tapIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tapEmoji: {fontSize: 32},
-  tapText: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.white,
+  emptyTitle: {
+    fontSize: FontSizes.size17,
+    fontWeight: Weights.bold,
+    color: colors.navy,
     textAlign: 'center',
-    lineHeight: 26,
   },
-  doneCompactBtn: {
+  emptySub: {
+    fontSize: FontSizes.size15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  emptyBtn: {
+    marginTop: 12,
     height: 44,
-    paddingHorizontal: 40,
+    paddingHorizontal: 32,
     borderRadius: 22,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
   },
-  doneCompactBtnPressed: {backgroundColor: colors.primaryDark},
-  doneCompactLabel: {
+  emptyBtnPressed: {opacity: 0.9},
+  emptyBtnLabel: {
     fontSize: FontSizes.size15,
     fontWeight: Weights.extrabold,
     color: colors.white,
@@ -254,24 +312,5 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.size17,
     fontWeight: Weights.bold,
     color: colors.white,
-  },
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: FontSizes.size17,
-    fontWeight: Weights.bold,
-    color: colors.navy,
-    textAlign: 'center',
-  },
-  emptySub: {
-    fontSize: FontSizes.size15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
   },
 });

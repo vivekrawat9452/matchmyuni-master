@@ -8,18 +8,18 @@ import type {AuthStackParamList} from '../../../navigation/authTypes';
 
 // Emoji characters extracted directly from Figma node 301-21900 (fontSize 32, Plus Jakarta Sans)
 const ITEMS: StudyItem[] = [
-  {id: 'business',    label: 'Business',      emoji: '💼'},
-  {id: 'engineering', label: 'Engineering',   emoji: '⚙️'},
-  {id: 'medicine',    label: 'Medicine',      emoji: '🩺'},
-  {id: 'law',         label: 'Law',           emoji: '⚖️'},
-  {id: 'cs',          label: 'Computer Sci.', emoji: '💻'},
-  {id: 'arts',        label: 'Arts & Design', emoji: '🎨'},
-  {id: 'arch',        label: 'Architecture',  emoji: '🏛️'},
-  {id: 'psych',       label: 'Psychology',    emoji: '🧠'},
-  {id: 'finance',     label: 'Finance',       emoji: '📊'},
-  {id: 'edu',         label: 'Education',     emoji: '📚'},
-  {id: 'science',     label: 'Sciences',      emoji: '🔬'},
-  {id: 'media',       label: 'Media',         emoji: '🎬'},
+  {id: 'business', label: 'Business', emoji: '💼'},
+  {id: 'engineering', label: 'Engineering', emoji: '⚙️'},
+  {id: 'medicine', label: 'Medicine', emoji: '🩺'},
+  {id: 'law', label: 'Law', emoji: '⚖️'},
+  {id: 'arts', label: 'Arts & Design', emoji: '🎨'},
+  {id: 'arch', label: 'Architecture', emoji: '🏛️'},
+  {id: 'psych', label: 'Psychology', emoji: '🧠'},
+  {id: 'finance', label: 'Finance', emoji: '📊'},
+  {id: 'edu', label: 'Education', emoji: '📚'},
+  {id: 'science', label: 'Sciences', emoji: '🔬'},
+  {id: 'media', label: 'Media', emoji: '🎬'},
+  {id: 'cs', label: 'Computer Sci.', emoji: '💻'},
 ];
 
 export function StudyInterestsContainer() {

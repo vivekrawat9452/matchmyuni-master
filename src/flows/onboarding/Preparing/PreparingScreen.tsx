@@ -7,7 +7,10 @@ import {text} from '../../../utils/theme';
 import {wp} from '../../../utils/sizes';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-type Props = {message?: string};
+type Props = {
+  message?: string;
+  chips?: string[];
+};
 
 /**
  * Post-registration loading screen — pixel-perfect Figma match.
@@ -21,7 +24,7 @@ type Props = {message?: string};
  *   TEXT "Comparing 247..."  12px/500  lh=15  color=#677899
  *   Chips: r=62 stroke=#E7E1D9 sw=1.5 pad T9R12B9L12 text 12px/600 lh=18 ls=-0.44
  */
-export function PreparingScreen({message}: Props) {
+export function PreparingScreen({message, chips}: Props) {
   const insets = useSafeAreaInsets();
 
   // Progress bar: 0 → 1 over 3 s, loops
@@ -87,13 +90,12 @@ export function PreparingScreen({message}: Props) {
         </View>
 
         {/* Sub-text — Figma: 12px/500 lh=15 color=#677899 */}
-        <Text style={styles.sub}>{en.preparing.sub}</Text>
+        <Text style={styles.sub}>{en.preparing.comparing}</Text>
 
-        {/* Filter chips — Figma: r=62 stroke=#E7E1D9 sw=1.5 pad T9R12B9L12 gap=5 */}
         <View style={styles.chips}>
-          <Chip label="🇩🇪  Germany" />
-          <Chip label="🎓  Engineering" />
-          <Chip label="$6–12k/yr" />
+          {(chips ?? []).map(label => (
+            <Chip key={label} label={label} />
+          ))}
         </View>
 
         {/* Pulsing loader dot */}
